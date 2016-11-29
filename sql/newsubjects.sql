@@ -1,0 +1,1 @@
+select distinct subject from grades  where subject not in (select distinct subject from grades where  not year="2015-2016")

@@ -22,13 +22,14 @@ class database:
         self.csv_educa = {'eu':'Usuario EDUCA','es':'Usuario EDUCA'}
         self.csv_uniquename = {'eu':'Erabiltzaile izen bakarra','es':'Nombre de usuario único'}  # FIXME es names
         self.csv_fullname = {'eu':'Izen Osoa','es':'Nombre Completo'}
+        self.csv_birthday = {'eu':'JaiotegunaFecha','es':'Nacimiento'}
+        self.csv_nationality = {'eu':'Nazionalitatea','es':'Nacionalidad'}
+        #FIXME: self.csv_gender = {'eu':'','es':''}
         #Still not using them:
         self.csv_birthplace_es = {'eu':'Jaioterria (ES)','es':'Localidad Nacimiento (ES)'}
         self.csv_birthplace_eu = {'eu':'Jaioterria (EU)','es':'Localidad Nacimiento (EU)'}
         self.csv_birthcountry_es = {'eu':'Jaiotze-herrialdea (ES)','es':'País Nacimiento (ES)'}
         self.csv_birthcountry_eu = {'eu':'Jaiotze-herrialdea (EU)','es':'País Nacimiento (EU)'}
-        self.csv_birthday = {'eu':'JaiotegunaFecha','es':'Nacimiento'}
-        self.csv_nationality = {'eu':'Nazionalitatea','es':'Nacionalidad'}
         #importing year data for each student
         self.csv_year = {'eu':'Ikasturtea','es':'Curso Escolar'}
         self.csv_course = {'eu':'Kurtso','es':'Curso matrícula'}
@@ -54,7 +55,10 @@ class database:
         self.csv_abv_es = {'eu':'ASIGNATURA_CORTO','es':'ASIGNATURA_CORTO'}
         self.csv_abv_eu = {'eu':'IRAKAS_MOTZA','es':'IRAKAS_MOTZA'}
         self.csv_subjcourse = {'eu':'CURSO_CORTO','es':'CURSO_CORTO'}
-        self.csv_dept = {'eu':'Departamentua','es':'Departamento'}
+        self.csv_dept = {'eu':'DEPT','es':'DEPT'}
+        self.csv_subjgroup  = {'eu':'TALDE','es':'TALDE'}
+        self.csv_stage = {'eu':'ETAPA_CORTO','es':'ETAPA_CORTO'}
+        self.csv_code = {'eu':'CODE','es':'CODE'}
 
         #{'eu':'','es':''} Others...
 
@@ -114,8 +118,11 @@ class database:
         con.execute('''CREATE TABLE names
             (uniquename TEXT PRIMARY KEY NOT NULL,
             educa           TEXT   NOT NULL,
-            fullname        TEXT NOT NULL);''')
-        #FIXME educa->educacode, birthdate, primaryschool
+            fullname        TEXT NOT NULL,
+            birthday	TEXT,
+            gender	TEXT,
+            nationality	TEXT,
+            primaryschool	TEXT);''')
         print("names table created successfully")
         con.close()
 
@@ -126,14 +133,15 @@ class database:
         """
         con = sqlite3.connect(self.db)
         con.execute('''CREATE TABLE yeardata
-            (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            uniquename           TEXT   NOT NULL,
+            (id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            uniquename  TEXT   NOT NULL,
             year        TEXT NOT NULL,
             course      TEXT NOT NULL,
-            cgroup       TEXT NOT NULL,
+            cgroup      TEXT NOT NULL,
             lang        TEXT NOT NULL,
             repeating   INTEGER NOT NULL,
-            promoting   TEXT NOT NULL);''')
+            promoting   TEXT,
+            unique(uniquename,year));''')
         print("yeardata table created successfully")
         con.close()
 
@@ -141,6 +149,7 @@ class database:
     def generate_grade_table(self,cur=None):
         """
         Generates the database for storing the information
+        about students's  grades
         :return:
         """
         con = sqlite3.connect(self.db)
@@ -156,10 +165,19 @@ class database:
         con.close()
 
     def generate_abreviations_table(self, cur=None):
+        """
+        Generates the database for storing the information
+        about subjects: Their names, and relations
+        :return:
+        """
         con = sqlite3.connect(self.db)
         con.execute('''CREATE TABLE abreviations
             (id INTEGER PRIMARY KEY AUTOINCREMENT    NOT NULL,
-            name           TEXT   NOT NULL,
+            stage          TEXT   NOT NULL,
+            code          TEXT   NOT NULL,           
+            subject_group  TEXT,
+            name_es           TEXT   NOT NULL,
+            name_eu           TEXT   NOT NULL,
             abv_es        TEXT NOT NULL,
             abv_eu        TEXT  NOT NULL,
             course        INT NOT NULL,
@@ -168,6 +186,13 @@ class database:
         con.close()
 
     def generate_all_tables(self):
+        """
+        Generates all database tables:
+        names
+        yeardata
+        abreviations
+        grades
+        """
         self.generate_names_table()
         self.generate_yeardata_table()
         self.generate_abreviations_table()
@@ -194,11 +219,14 @@ class database:
                 uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
                 educa = self.get_csv_header_index(headers,self.csv_educa)
                 fullname = self.get_csv_header_index(headers,self.csv_fullname)
+                birthday = self.get_csv_header_index(headers,self.csv_birthday)
+                gender = self.get_csv_header_index(headers,self.csv_gender)
+                nationality = self.get_csv_header_index(headers,self.csv_nationality)
                 print(fullname)
                 for row in reader:
                     cur.execute(
-                        "INSERT OR IGNORE INTO names(uniquename, educa, fullname) VALUES(?, ?, ?)",
-                        (row[uniquename], row[educa], row[fullname]))
+                        "INSERT OR IGNORE INTO names(uniquename, educa, fullname, birthday, gender, nationality) VALUES(?, ?, ?, ?, ?, ?)",
+                        (row[uniquename], row[educa], row[fullname],row[birthday], row[gender], row[nationality]))
         con.commit()
         con.close()
 
@@ -232,7 +260,34 @@ class database:
                         (row[uniquename], row[year], row[course], row[group], row[lang], row[repeating], row[promoting]))
         con.commit()
         con.close()
+    
+    def update_primaryschool_data(self,files):
+        '''
+        :param files: A list of csv files with the following format:
         
+        :return: None
+        '''
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        print("Opened database successfully")
+        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='names'").fetchall()[0][
+            0] == 0:
+            #FIXME: ERROR!  
+            self.generate_names_table(cur)
+        for file in files:#FIXME Try catch?
+            with open(file, 'r', encoding="UTF-8") as results:
+                reader = csv.reader(results, delimiter=";")
+                headers = next(reader, None)  # get first row with headers
+                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                #FIMXE primaryschool = self.get_csv_header_index(headers,self.csv_primaryschool)
+                for row in reader:
+                    cur.execute(
+                        "UPDATE names SET primaryschool =? WHERE uniquename=?",
+                        (row[primaryschool],row[uniquename]))
+        con.commit()
+        con.close()
+    
+    
     def update_promotion_data(self,files):
         '''
         :param files: A list of csv files with the following format:
@@ -281,10 +336,16 @@ class database:
                 abv_eu = self.get_csv_header_index(headers,self.csv_abv_eu)
                 abv_es = self.get_csv_header_index(headers,self.csv_abv_es)
                 subjcourse = self.get_csv_header_index(headers,self.csv_subjcourse)
+                subject_group = self.get_csv_header_index(headers,self.csv_subjgroup)
+                stage = self.get_csv_header_index(headers,self.csv_stage)
+                code = self.get_csv_header_index(headers,self.csv_code)
                 dept = "changeme" #FIXMEself.get_csv_header_index(headers,self.csv_dept)
                 for row in reader:
-                    cur.execute("INSERT INTO abreviations(name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?)",
-                        (row[subjname_eu], row[subjname_es], row[abv_eu], row[abv_es], row[subjcourse], dept))#row[dept]))
+                    subject_group_value = ''
+                    if row[subject_group] != '':
+                            subject_group_value = row[subject_group]
+                    cur.execute("INSERT INTO abreviations(stage,code,subject_group,name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?)",
+                        (row[stage],row[code],subject_group_value,row[subjname_eu], row[subjname_es], row[abv_eu], row[abv_es], row[subjcourse], dept))#row[dept]))
         con.commit()
         con.close()
 

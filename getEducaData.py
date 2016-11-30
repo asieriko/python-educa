@@ -10,6 +10,7 @@ class GetEDUCAdata():
     params = []
     years = []
     verbose = True
+    p = [['rbIdiomaConsulta',lang]]
 
     def __init__(self, username="", password="", verbose=True):
         self.username = username
@@ -24,6 +25,7 @@ class GetEDUCAdata():
         self.lang = "eu"
         self.verbose = verbose
         self.params = [['rbIdiomaConsulta',self.lang]]
+        p = [['rbIdiomaConsulta',self.lang]]
         #self.params.append(['cbCursoEscolar',year[1]])
 
     def setusername(self, username):
@@ -44,6 +46,9 @@ class GetEDUCAdata():
         self.body['username'] = self.username
         self.body['password'] = self.password
         self.params=[['rbIdiomaConsulta',self.lang]]
+
+    def resetparams(self):
+        self.params = self.p
 
     def options(self, soup, name):
         if self.verbose: print(soup)
@@ -132,6 +137,10 @@ class GetEDUCAdata():
         if self.verbose: print(keys)
         return keys
     
+    def selectcustomdata(self,data):
+        for param in data:
+            self.params.append(["'"+param+"'",''])
+    
     def selectgradedata(self): #Only grades
         self.params.append(['tbMatricula.txCursoEscolar',''])
         self.params.append(['tbAlumno.txUsuarioUnico',''])
@@ -140,7 +149,6 @@ class GetEDUCAdata():
         self.params.append(['tbCalificacionesDF.cursoAsignatura',''])
         self.params.append(['tbCalificacionesDF.evaluacion',''])
         self.params.append(['tbCalificacionesDF.calificacionNumericaOrd',''])
-        
 
     def selectyeardata(self):
         self.params.append(['tbMatricula.txCursoEscolar',''])
@@ -151,8 +159,6 @@ class GetEDUCAdata():
         self.params.append(['tbAlumno.txNombreCompleto',''])
         self.params.append(['tbAlumno.txUsuarioUnico',''])
         self.params.append(['tbMatricula.bRepite',''])
-        #self.params.append(['tbAlumno.cSexo',''])
-        #self.params.append(['tbAlumno.txPaisNacimiento_EU',''])
 
     def selectenddata(self):
         self.params.append(['tbMatricula.txCursoEscolar',''])
@@ -160,6 +166,14 @@ class GetEDUCAdata():
         self.params.append(['tbDatosFinales.decTitulo',''])
         self.params.append(['tbDatosFinales.decPromocion',''])
         self.params.append(['tbMatricula.txBajaDestino',''])
+        
+    def selectpersonaldata(self):    
+        self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca',''])
+        self.params.append(['tbAlumno.txNombreCompleto',''])
+        self.params.append(['tbAlumno.cSexo',''])
+        self.params.append(['tbAlumno.txPaisNacimiento_EU',''])
+        self.params.append(['tbAlumno.dtFechaNacimiento',''])
 
     def selectdata(self,data=[]):
         self.params.append(['btnEnviar.x','43'])
@@ -170,16 +184,19 @@ class GetEDUCAdata():
             self.selectgradedata()
         if "end" in data:
             self.selectenddata()
+        if "personal" in data:
+            self.selectpersonaldata()    
         
 
-    def getdata(self):
-        if self.verbose: print("Retrieveing data to file: " + self.path + "...")
+    def getdata(self,path=None):
+        if not path:
+            path = self.path
         r = self.s.post(self.exporturl, data=self.params)
-        #print(r.status_code)
         if self.verbose: print(r.headers)
         print("Get data: ", r.status_code)
+        print("Retrieveing data to file: " + path + "  ...")
         if r.status_code == 200:
-            with open(self.path, 'wb') as f:
+            with open(path, 'wb') as f:
                 for chunk in r.iter_content():
                     f.write(chunk)
                     
@@ -195,9 +212,36 @@ class GetEDUCAdata():
         self.getdata()
         self.logout()
         
+    def getalldata(self,data):
+        self.login()
+        years = self.getyears()
+        for year in years:
+            courses = self.getcourses(year)
+            self.selectcourses(courses)
+            subjects = self.getsubjects()
+            self.selectsubjects(subjects)
+            self.getpossibledata()
+            self.selectdata([data])
+            self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/ezabatu"+data+str(year[0])+".csv")
+        self.logout()
+                   
+        
 if __name__ == "__main__":
     import getpass
     user = input("username: ")
     passwd = getpass.getpass()
-    ged = GetEDUCAdata(user,passwd)
-    ged.getalllastyear()
+    ged = GetEDUCAdata(user,passwd,verbose=False)
+    print(ged.params)
+    #ged.getalllastyear()
+    ged.getalldata("personal")
+    print(ged.params)
+    ged.resetparams()
+    ged.getalldata("year")
+    print(ged.params)
+    ged.resetparams()
+    ged.getalldata("grades")
+    print(ged.params)
+    ged.resetparams()
+    ged.getalldata("end")
+    print(ged.params)
+    print("Done")

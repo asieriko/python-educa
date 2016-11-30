@@ -1,0 +1,1 @@
+select yeardata.year,yeardata.course,yeardata.cgroup,yeardata.lang,yeardata.uniquename,grades.subject,grades.period,grades.grade from yeardata,grades where yeardata.year=grades.year and yeardata.uniquename=grades.uniquename and grades.course=yeardata.course and yeardata.year="2015-2016" AND grades.period="2. Ebaluazioa" LIMIT 20

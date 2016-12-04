@@ -51,7 +51,8 @@ class GetEDUCAdata():
         self.params = self.p
 
     def options(self, soup, name):
-        if self.verbose: print(soup)
+        if self.verbose: 
+            print(soup)
         keys = [str(x.text) for x in soup.find(id=name).find_all('option')]
         select = soup.find('select',{'name':name})
         option_tags = select.findAll('option')
@@ -59,7 +60,8 @@ class GetEDUCAdata():
         return list(zip(keys,values))
 
     def login(self):
-        if self.verbose: print("Login in...")
+        if self.verbose: 
+            print("Login in...")
         loginPage = self.s.get(self.loginurl)
         soup = BeautifulSoup(loginPage.text)
         hiddenInputs = soup.findAll(name = 'input', type = 'hidden')
@@ -81,7 +83,8 @@ class GetEDUCAdata():
         print("Logout ",logoutPage.status_code)
         
     def getyears(self):
-        if self.verbose: print("Querying years...")
+        if self.verbose: 
+            print("Querying years...")
         r = self.s.get(self.exporturl)
         print("Get years: ",r.status_code)
         soup = BeautifulSoup(r.text)
@@ -89,7 +92,8 @@ class GetEDUCAdata():
         return years
 
     def getcourses(self,year):
-        if self.verbose: print("Querying courses...")
+        if self.verbose: 
+            print("Querying courses...")
         self.params = [['rbIdiomaConsulta','eu'],['cbCursoEscolar',year[1]]]
         r = self.s.post(self.coursesurl, data = self.params)
         print("Get Courses: ", r.status_code)
@@ -102,7 +106,8 @@ class GetEDUCAdata():
             self.params.append(['lbGrupos',course[1]])
     
     def getsubjects(self):
-        if self.verbose: print("Querying subjects...")
+        if self.verbose: 
+            print("Querying subjects...")
         r = self.s.post(self.coursesurl, data = self.params)
         print("Get subjects: ",r.status_code)
         soup = BeautifulSoup(r.text)
@@ -119,7 +124,8 @@ class GetEDUCAdata():
         grades = "tbCalificacionesDF.ul"
         finaldata = "tbDatosFinales.ul"
         data = ["tbMatricula.ul", "tbAlumno.ul", "tbCalificacionesDF.ul", "tbDatosFinales.ul"]
-        if self.verbose: print("Querying data...")
+        if self.verbose: 
+            print("Querying data...")
         datad = {}
         r = self.s.post(self.coursesurl, data = self.params)
         print("Get possible data: ",r.status_code)

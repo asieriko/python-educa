@@ -1,3 +1,10 @@
+'''
+This script creates an odt document with a summary of the evaluation data
+In needs a OrderedDict with the courses, languages and groups for each one of them
+It also needs the plots of each course, lang, group. Both subjects and promotion
+And it needs too a csv file with a summary of each group data (cleaning, care, ...) 
+'''
+
 from odf.opendocument import OpenDocumentText
 from odf.style import Style, TextProperties, ParagraphProperties, GraphicProperties, TableCellProperties
 from odf.style import PageLayout, MasterPage, Header, Footer

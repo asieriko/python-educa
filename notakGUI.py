@@ -1,3 +1,9 @@
+'''
+This will be a GUI for managing Academic data.
+Importing downloaded CSV files into the database
+Maybe the downloader can be integrated in this
+'''
+
 import sys
 from PyQt5.QtWidgets import QMainWindow, QTextEdit, QAction, QApplication,QFileDialog,QMessageBox
 from PyQt5.QtGui import QIcon

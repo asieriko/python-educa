@@ -499,6 +499,9 @@ class notak:
         return list(zip(years,good))
 
     def generatePassPercent(self,period,year,group = None,percentaje = 70):
+        '''
+        generates CSV files whit information about subjects and its passin %
+        '''
         if group:
             framefilter = (self.df['period']==period) & (self.df['year']==year) & (self.df['cgroup']==group)
         else:

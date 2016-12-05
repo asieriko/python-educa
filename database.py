@@ -22,14 +22,16 @@ class database:
         self.csv_educa = {'eu':'Usuario EDUCA','es':'Usuario EDUCA'}
         self.csv_uniquename = {'eu':'Erabiltzaile izen bakarra','es':'Nombre de usuario único'}  # FIXME es names
         self.csv_fullname = {'eu':'Izen Osoa','es':'Nombre Completo'}
-        self.csv_birthday = {'eu':'JaiotegunaFecha','es':'Nacimiento'}
+        self.csv_birthday = {'eu':'Jaioteguna','es':'FechaNacimiento'}
         self.csv_nationality = {'eu':'Nazionalitatea','es':'Nacionalidad'}
-        #FIXME: self.csv_gender = {'eu':'','es':''}
+        self.csv_gender = {'eu':'Sexua','es':'Sexo'} #FIXME: Sexo??
+        self.csv_primaryschool = {'eu':'','es':'Centro de procedencia'}#FIXME: eu centro
         #Still not using them:
         self.csv_birthplace_es = {'eu':'Jaioterria (ES)','es':'Localidad Nacimiento (ES)'}
         self.csv_birthplace_eu = {'eu':'Jaioterria (EU)','es':'Localidad Nacimiento (EU)'}
         self.csv_birthcountry_es = {'eu':'Jaiotze-herrialdea (ES)','es':'País Nacimiento (ES)'}
         self.csv_birthcountry_eu = {'eu':'Jaiotze-herrialdea (EU)','es':'País Nacimiento (EU)'}
+        self.csv_nationality = {'eu': 'Nazionalitatea','es':'Nacionalidad'}
         #importing year data for each student
         self.csv_year = {'eu':'Ikasturtea','es':'Curso Escolar'}
         self.csv_course = {'eu':'Kurtso','es':'Curso matrícula'}
@@ -141,7 +143,8 @@ class database:
             lang        TEXT NOT NULL,
             repeating   INTEGER NOT NULL,
             promoting   TEXT,
-            unique(uniquename,year));''')
+            unique(uniquename,year),
+            FOREIGN KEY(uniquename) REFERENCES names(uniquename));''')
         print("yeardata table created successfully")
         con.close()
 
@@ -158,9 +161,13 @@ class database:
             year           TEXT   NOT NULL,
             uniquename        TEXT  NOT NULL,
             subject        TEXT  NOT NULL,
+            code        TEXT  NOT NULL,
             course         TEXT NOT NULL,
             period        TEXT  NOT NULL,
-            grade         INTEGER);''')
+            grade         INTEGER,
+            FOREIGN KEY(uniquename) REFERENCES names(uniquename),
+            FOREIGN KEY(code) REFERENCES abreviations(code));''')
+        #unique (year, uniquename,subject,course, period,grade)
         print("Grades table created successfully")
         con.close()
 
@@ -213,7 +220,7 @@ class database:
             self.generate_names_table(cur)
         for file in files:#FIXME Try catch?
             print(file)
-            with open(file, 'r', encoding="UTF-8") as results:
+            with open(file, 'r', encoding="ISO-8859-1") as results: #changed encondig from utf-8
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
                 uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
@@ -221,7 +228,7 @@ class database:
                 fullname = self.get_csv_header_index(headers,self.csv_fullname)
                 birthday = self.get_csv_header_index(headers,self.csv_birthday)
                 gender = self.get_csv_header_index(headers,self.csv_gender)
-                nationality = self.get_csv_header_index(headers,self.csv_nationality)
+                nationality = self.get_csv_header_index(headers,self.csv_nationality) 
                 print(fullname)
                 for row in reader:
                     cur.execute(
@@ -244,7 +251,7 @@ class database:
             0] == 0:
             self.generate_years_table(cur)
         for file in files:#FIXME Try catch?
-            with open(file, 'r', encoding="UTF-8") as results:
+            with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
                 uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
@@ -253,16 +260,52 @@ class database:
                 group = self.get_csv_header_index(headers,self.csv_ref_group)
                 lang = self.get_csv_header_index(headers,self.csv_lang)
                 repeating = self.get_csv_header_index(headers,self.csv_repeating)
-                promoting = self.get_csv_header_index(headers,self.csv_promoting)
+                group_type = self.get_csv_header_index(headers,self.csv_group_type )
+                #promoting = self.get_csv_header_index(headers,self.csv_promoting) #I've also remove from the query. 
                 for row in reader:
+                    if row[group_type] not in ["Arrunta","Ordinario"]:  #FIXME: Check if it is ordinario in spanish
+                        continue
                     cur.execute(
-                        "INSERT INTO yeardata(uniquename, year, course, cgroup, lang, repeating, promoting) VALUES(?, ?, ?,?, ?, ?, ?)",
-                        (row[uniquename], row[year], row[course], row[group], row[lang], row[repeating], row[promoting]))
+                        "INSERT INTO yeardata(uniquename, year, course, cgroup, lang, repeating) VALUES(?, ?, ?,?, ?, ?)",
+                        (row[uniquename], row[year], row[course], row[group], row[lang], row[repeating]))
         con.commit()
         con.close()
     
+    def update_end_yeardata(self, files):
+        '''
+        :param files: A list of csv files with the following format:
+        Ikasturtea,Baja Destinoa, Erabiltzaile Izen bakarra, Tituluaren Gaineko erabakia, ikurtsoz igarotzearen gaineko erabakia
+        ['2007-2008';'';'auriolar';'';'Bai, deialdi arrutenan']
+        :return: None
+        '''
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        print("Opened database successfully")
+        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='yeardata'").fetchall()[0][
+            0] == 0:
+            self.generate_years_table(cur)
+        for file in files:#FIXME Try catch?
+            with open(file, 'r', encoding="ISO-8859-1") as results:
+                reader = csv.reader(results, delimiter=";")
+                headers = next(reader, None)  # get first row with headers
+                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                year = self.get_csv_header_index(headers,self.csv_year)
+                degree = self.get_csv_header_index(headers,self.csv_degree_decision)
+                promo = self.get_csv_header_index(headers,self.csv_promoting_decicision)
+                for row in reader:
+                    promoting = row[degree]+row[promo]  #One of them is always ""
+                    cur.execute(
+                        "UPDATE yeardata SET promoting = ? WHERE uniquename = ? and year = ?",
+                        (promoting, row[uniquename], row[year]))
+        con.commit()
+        con.close()
+        
+
     def update_primaryschool_data(self,files):
         '''
+        new function to add primary school for existing sutdents
+        This information is not in EDUCA so they have to send it
+        
         :param files: A list of csv files with the following format:
         
         :return: None
@@ -279,7 +322,7 @@ class database:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
                 uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
-                #FIMXE primaryschool = self.get_csv_header_index(headers,self.csv_primaryschool)
+                primaryschool = self.get_csv_header_index(headers,self.csv_primaryschool)
                 for row in reader:
                     cur.execute(
                         "UPDATE names SET primaryschool =? WHERE uniquename=?",
@@ -303,7 +346,7 @@ class database:
             #FIXME: ERROR!  
             self.generate_years_table(cur)
         for file in files:#FIXME Try catch?
-            with open(file, 'r', encoding="UTF-8") as results:
+            with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
                 uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
@@ -339,13 +382,13 @@ class database:
                 subject_group = self.get_csv_header_index(headers,self.csv_subjgroup)
                 stage = self.get_csv_header_index(headers,self.csv_stage)
                 code = self.get_csv_header_index(headers,self.csv_code)
-                dept = "changeme" #FIXMEself.get_csv_header_index(headers,self.csv_dept)
+                dept = self.get_csv_header_index(headers,self.csv_dept)
                 for row in reader:
                     subject_group_value = ''
                     if row[subject_group] != '':
                             subject_group_value = row[subject_group]
-                    cur.execute("INSERT INTO abreviations(stage,code,subject_group,name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?)",
-                        (row[stage],row[code],subject_group_value,row[subjname_eu], row[subjname_es], row[abv_eu], row[abv_es], row[subjcourse], dept))#row[dept]))
+                    cur.execute("INSERT INTO abreviations(stage,code,subject_group,name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (row[stage],row[code],subject_group_value,row[subjname_eu], row[subjname_es], row[abv_eu], row[abv_es], row[subjcourse], row[dept]))
         con.commit()
         con.close()
 
@@ -356,6 +399,7 @@ class database:
         ['2013-2014', '1. I', '1. DBH', 'D', 'XXXXX', 'Gizarte Zientziak, Geografia eta Historia BH1', '2. Ebaluaketa', '9']
         :return: None
         '''
+        codesdic = self.get_subjects_codes()
         con = sqlite3.connect(self.db)
         cur = con.cursor()
         print("Opened database successfully")
@@ -364,7 +408,7 @@ class database:
             self.generate_grade_table(cur)
         for file in files:
             print(file)
-            with open(file, 'r', encoding="UTF-8") as results:
+            with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
                 print(headers)
@@ -376,14 +420,13 @@ class database:
                 grade = self.get_csv_header_index(headers,self.csv_grade)
                 try:
                     for row in reader:
-                        print(row)
                         if row[grade] != '':
                             grade_value = int(row[grade])
                         else:
                             grade_value = ''
                         cur.execute(
-                            "INSERT INTO grades(year, uniquename, subject, course, period, grade) VALUES(?, ?, ?, ?, ?, ?)",
-                            (row[year], row[uniquename], row[subject], row[course], row[period], grade_value))
+                            "INSERT INTO grades(year, uniquename, subject, course, period, grade,code) VALUES(?, ?, ?, ?, ?, ?,?)",
+                            (row[year], row[uniquename], row[subject], row[course], row[period], grade_value,codesdic[row[subject]]))
     #                        (row[year], row[uniquename], self.get_subject_id(row[subject]), row[course], row[period], grade_value)) #FIXME Create the other table
                 except Exception as inst:
                        print(type(inst))    # the exception instance
@@ -391,29 +434,6 @@ class database:
                        print(inst) 
         con.commit()
         con.close()
-
-    def update_primaryschool(self, files):
-        '''
-        new function to add primary school for existing sutdents
-        This information is not in EDUCA so they have to send it
-        '''
-        con = sqlite3.connect(self.db)
-        cur = con.cursor()
-
-        print("Opened database successfully")
-        for file in files:
-            with open("/home/asier/Hezkuntza/python-hezkuntza/Python-educa/data/eskolak.csv", 'r', encoding="UTF-8") as results:
-                reader = csv.reader(results, delimiter=";")
-                headers = next(reader, None)  # get first row with headers
-                print(headers)
-                for row in reader:
-                    print(row)
-                    cur.execute(
-                        "UPDATE names SET primaryschool = ? WHERE uniquename = ?",
-                        (row[1], row[0]))
-                
-        con.commit()
-        con.close()  
 
     def get_csv_header_index(self,header,valuedic):
         print(header,valuedic)
@@ -435,18 +455,18 @@ class database:
             return subject_id
         raise ValueError
 
-
-    def get_subjects(self,cur=None):
+    
+    def get_subjects_codes(self,cur=None):
         """
-        Gets all subjects stored in the database
+        Gets all subjects and their codes stored in the database
         :return:
         """
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        subjects = cur.execute("select distinct subject from results").fetchall()
-        for subject in subjects:
-            print((subject[0]))
-        return [s[0] for s in subjects]
+        subjects = cur.execute("select name_eu,code from abreviations").fetchall()
+        d = {key: value for (key, value) in subjects}
+        con.close()
+        return d
 
     def get_years(self):
         """

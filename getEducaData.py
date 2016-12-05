@@ -158,6 +158,7 @@ class GetEDUCAdata():
 
     def selectyeardata(self):
         self.params.append(['tbMatricula.txCursoEscolar',''])
+        self.params.append(['tbMatricula.txGrupoReferencia',''])
         self.params.append(['tbMatricula.txNombreGrupo',''])
         self.params.append(['tbMatricula.txTipoGrupo',''])
         self.params.append(['tbMatricula.txNombreCurso',''])
@@ -171,14 +172,14 @@ class GetEDUCAdata():
         self.params.append(['tbAlumno.txUsuarioUnico',''])
         self.params.append(['tbDatosFinales.decTitulo',''])
         self.params.append(['tbDatosFinales.decPromocion',''])
-        self.params.append(['tbMatricula.txBajaDestino',''])
+        self.params.append(['tbMatricula.bEstado','']) #FIXME: Baja edo ez
         
     def selectpersonaldata(self):    
         self.params.append(['tbAlumno.txUsuarioUnico',''])
         self.params.append(['tbAlumno.txUsuarioEduca',''])
         self.params.append(['tbAlumno.txNombreCompleto',''])
         self.params.append(['tbAlumno.cSexo',''])
-        self.params.append(['tbAlumno.txPaisNacimiento_EU',''])
+        self.params.append(['tbAlumno.txNacionalidad',''])
         self.params.append(['tbAlumno.dtFechaNacimiento',''])
 
     def selectdata(self,data=[]):
@@ -228,7 +229,7 @@ class GetEDUCAdata():
             self.selectsubjects(subjects)
             self.getpossibledata()
             self.selectdata([data])
-            self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/ezabatu"+data+str(year[0])+".csv")
+            self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/"+data+str(year[0])+".csv")
         self.logout()
                    
         
@@ -245,9 +246,9 @@ if __name__ == "__main__":
     ged.getalldata("year")
     print(ged.params)
     ged.resetparams()
-    ged.getalldata("grades")
-    print(ged.params)
-    ged.resetparams()
+    #ged.getalldata("grades")
+    #print(ged.params)
+    #ged.resetparams()
     ged.getalldata("end")
     print(ged.params)
     print("Done")

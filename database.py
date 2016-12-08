@@ -392,13 +392,29 @@ class database:
         con.commit()
         con.close()
 
-    def insert_grades(self, files):
+
+    def delete_last_years_grades(self,year=''):
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        if not year:
+            sqlyears = "select distinct year from grades order by year"
+            year = cur.execute(sqlyears).fetchall()[-1][0]
+            print(year)
+        cur.execute("DELETE from GRADES WHHERE year = ?",(year))
+        con.commit()
+        con.close()
+
+    def insert_grades(self, files, deletelast=False):
         '''
         :param files: A list of csv files with the following format:
         Ikasturtea,Taldea,Kurtso,Hizkuntza eredua,Izen Osoa,Irakasgaiaren Izena,Ebaluaketa,Zenbakizko nota ohikoa
         ['2013-2014', '1. I', '1. DBH', 'D', 'XXXXX', 'Gizarte Zientziak, Geografia eta Historia BH1', '2. Ebaluaketa', '9']
+        :param deletelast: Last or better current year grades are imported for each period. If this is true all years data is deleted
+        before inserting again. If it is false all data is added
         :return: None
         '''
+        if deletelast:
+            self.delete_last_years_grades()
         codesdic = self.get_subjects_codes()
         con = sqlite3.connect(self.db)
         cur = con.cursor()
@@ -580,7 +596,7 @@ class database:
         plt.show()
 
 if __name__=="__main__":
-    data = database("mendillorri.db")
+    
     #data.insert_names(["data/izenak07-08.csv","data/izenak08-09.csv","data/izenak09-10.csv","data/izenak10-11.csv","data/izenak11-12.csv","data/izenak12-13.csv","data/izenak13-14.csv","data/izenak14-15.csv","data/izenak15-16.csv"])
     #data.insert_yeardata(["data/prom07-08.csv","data/prom08-09.csv","data/prom09-10.csv","data/prom10-11.csv","data/prom11-12.csv","data/prom12-13.csv","data/prom13-14.csv","data/prom14-15.csv"])
     #path = "/media/asier/ERREGESTOM/dptosn.csv"

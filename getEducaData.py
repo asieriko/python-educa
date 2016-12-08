@@ -207,16 +207,16 @@ class GetEDUCAdata():
                 for chunk in r.iter_content():
                     f.write(chunk)
                     
-    def getalllastyear(self):
+    def getallcurrentgrades(self):
         self.login()
         years = self.getyears()
-        courses = self.getcourses(years[-2])
+        courses = self.getcourses(years[-1])
         self.selectcourses(courses)
         subjects = self.getsubjects()
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["grades"])
-        self.getdata()
+        self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+str(years[-1][0])+".csv")
         self.logout()
         
     def getalldata(self,data):
@@ -231,7 +231,7 @@ class GetEDUCAdata():
             self.selectdata([data])
             self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/"+data+str(year[0])+".csv")
         self.logout()
-                   
+        
         
 if __name__ == "__main__":
     import getpass
@@ -239,16 +239,16 @@ if __name__ == "__main__":
     passwd = getpass.getpass()
     ged = GetEDUCAdata(user,passwd,verbose=False)
     print(ged.params)
-    #ged.getalllastyear()
-    ged.getalldata("personal")
-    print(ged.params)
-    ged.resetparams()
-    ged.getalldata("year")
-    print(ged.params)
-    ged.resetparams()
-    #ged.getalldata("grades")
+    ged.getallcurrentgrades()
+    #ged.getalldata("personal")
     #print(ged.params)
     #ged.resetparams()
-    ged.getalldata("end")
-    print(ged.params)
-    print("Done")
+    #ged.getalldata("year")
+    #print(ged.params)
+    #ged.resetparams()
+    ##ged.getalldata("grades")
+    ##print(ged.params)
+    ##ged.resetparams()
+    #ged.getalldata("end")
+    #print(ged.params)
+    #print("Done")

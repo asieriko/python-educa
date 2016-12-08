@@ -567,7 +567,7 @@ class notak:
         if not period: period = self.periods[self.ebnumber - 1]
         pt = pd.pivot_table(self.df[(self.df.year == year) & (self.df.period == period)], index=["uniquename"], values=["grade"], aggfunc=self.lowerThan).fillna('')
         missed = self.notPassedStats(pt.grade)
-        p,prom,riesgo,peligro, left,legendhist,allg = self.generatePiedata(missed)
+        p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
         if self.debug:
            print(self.generatePiedata(missed))
 
@@ -707,17 +707,21 @@ class notak:
                 if self.debug:
                    print("group: ",group)
                 subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent = self.generateStatsGroup(year, ebal, ebals, group)
-                #self.generateGroupStatsGradeAverage(year, ebals, course, [(group)]) #Generates the average grade for each subject
                 sdf = self.df[["uniquename","fullname"]]
                 sdf.drop_duplicates(inplace=True)
+                #try to have student names not ids
+                groupgrades = pd.merge(groupgrades,sdf,on="uniquename")
+                print(groupgrades.head())
+                
                 students = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""
                 ghtml = ""
-                for student in sorted(students):
+                for studentid in sorted(students):
+                    studentname = str(sdf[sdf.uniquename==studentid].fullname.item())
                     if self.debug:
-                        print("student: ",student)
-                    htmlmenu = htmlmenu + '<li><a href=\"#' + "-".join(str(student).split()) + '\">' + str(sdf[sdf.uniquename==student].fullname) + '</a></li>'
-                    html = self.generateStatsStudent2(year,ebal,ebals,student,str(sdf[sdf.uniquename==student].fullname),groupgrades)
+                        print("student: ",studentid," name:" + studentname)
+                    htmlmenu = htmlmenu + '<li><a href=\"#' + "-".join(str(studentid).split()) + '\">' + studentname + '</a></li>'
+                    html = self.generateStatsStudent2(year,ebal,ebals,studentid,studentname,groupgrades)
                     ghtml = ghtml + html
                 ghtml = '''
                 <!DOCTYPE html>
@@ -739,8 +743,7 @@ class notak:
                               </button>
                               <a class="navbar-brand" href="#">Ikasleen emaitzak</a>
                             </div>
-                          </div>
-                        </nav>
+                          </div></nav>
                     <div class=\"container-fluid\">
                         <div style="margin-top: 2cm;" class=\"row\">
                             <div class=\"col-sm-2 col-md-2 sidebar\">
@@ -820,7 +823,6 @@ class notak:
         lang = self.df[(self.df.year == year) & (self.df.cgroup == group)].lang.unique()[0]
         if self.debug:
            print("Eredua: ",lang)
-        #self.generateGroupStatsGradeAverage(year, ebals, course, [(group)]) #Generates the average grade for each subject
         students = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.cgroup == group)].uniquename.unique()
         groupgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
         groupgrades.unstack()
@@ -864,7 +866,6 @@ class notak:
         studentgroupgrades = pd.merge(studentgroupgrades,dfs,on="subject")#FIXME: I'm trying to have the abreviations in the plot and text in the table. IF it works abv_es has to be considered
         studentgroupgrades.drop('subject', axis=1, inplace=True)
         studentgroupgrades.columns = [fullname,'course','subject']
-        print(studentgroupgrades)
         studentgroupgrades = studentgroupgrades[['subject',fullname,'course']]
         
         if self.debug:
@@ -874,6 +875,8 @@ class notak:
         fname = group + "/" + year + "-" + ebal + "-" + student + ".png" #to use self.workdir + group + "/" + we need to create group dir first self.createDir(self.workdir + group)
         plt.clf()
         studentgroupgrades.plot(kind="bar",x=studentgroupgrades.subject)
+        plt.ylim(0, 10)
+        plt.axhline(5)
         plt.savefig(self.workdir + fname, format="png")
         plt.close()
         html = ""
@@ -936,34 +939,34 @@ class notak:
             plt.close()
     
 if __name__ == "__main__":
-    db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"
-    #db = "/home/asier/Hezkuntza/python-hezkuntza/Python-educa/test2.db"
+    #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"
+    db = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
     ebaluaketak = ['1. Ebaluazioa', '2. Ebaluazioa', '3. Ebaluazioa', 'Azken Ebaluazioa', 'Ohiz kanpoko Ebaluazioa','Final']
-    ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado"]
+    ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA"]
     divpmar=["3º Div.Cur.","4º Div. Cur.","3º PMAR"]
     batx=["1. Batxilergoa LOE","2. Batxilergoa LOE"]
     dbh=["2. DBH","1. DBH","3. DBH","4. DBH"]
     baliogabekokurtsoak = ucepca
     #files = ["/home/asier/Hezkuntza/SGCC-Erregistroak-15-16/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluación/1º Ev/Sabanas 2º Bach 27-11/1ev-2bach.csv"]
     #n.insertdataDB(files)
-    year = "2015-2016"
+    year = "2016-2017"
     for lang in ['eu','es']:
       n = notak(db,lang)
-      n.setWorkDir("3ebaluaketa15-16")
-      n.configure(year, ebaluaketak, 4, baliogabekokurtsoak)
-      n.removepending()
+      n.setWorkDir("1ebaluaketa16-17")
+      n.configure(year, ebaluaketak, 1, baliogabekokurtsoak)
+      #n.removepending()
       print("course np.mean")
       n.generateCoursePlots(np.mean)
       print("course percent")
       n.generateCoursePlots(n.percent)
-      n.promcourseplots("Azken Ebaluazioa")
-      taldeak = n.df[n.df.year == "2015-2016"].cgroup.unique()
+      n.promcourseplots("1. Ebaluazioa")
+      taldeak = n.df[n.df.year == year].cgroup.unique()
       for t in taldeak:
         n.generateGroupStatsPlots(t)
       n.generateAllGroupStatsPlots()
-      taldeak = n.df[n.df.year == "2015-2016"].cgroup.unique()
+      taldeak = n.df[n.df.year == year].cgroup.unique()
       for t in taldeak:
-        n.generatePassPercent("Azken Ebaluazioa","2015-2016",t)
+        n.generatePassPercent("1. Ebaluazioa",year,t)
       n.generateAllGroupPlots(np.mean)
       n.generateAllGroupPlots(n.percent)
       n.generateCoursePlots(np.mean)
@@ -973,7 +976,7 @@ if __name__ == "__main__":
     print("generate All Stats Plots")
     n.generateAllStatsPlots()
     print("generate STats Student")
-    n.generateStatsStudent("2015-2016", "2. Ebaluazioa")#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
+    n.generateStatsStudent("2016-2017", "1. Ebaluazioa")#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
 
 #import notakeb
 #import numpy as np

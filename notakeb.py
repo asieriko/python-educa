@@ -39,6 +39,7 @@ class notak:
         self.year = ""
         self.langg = lang
         self.subjectsavg = defaultdict(defaultdict)
+        self.subjects = {'eu': 'Ikasgaiak','es':'Asignaturas'}
         self.studpasstitle = {'eu': 'Ikasle vs ez gainditutakoak','es':'Alumnos vs suspensos'}
         self.promttitle = {'eu':'Promozioa','es':u'Promoción'}
         self.cur= {'eu':'Oraingoa','es':'Actual'}
@@ -69,7 +70,7 @@ class notak:
             self.periods[:self.period]) + "'"
         con = sqlite3.connect(self.db)
         sql="SELECT yeardata.year, yeardata.course AS coursename, yeardata.cgroup, yeardata.lang,\
-            yeardata.uniquename, names.fullname, \
+            yeardata.uniquename, names.fullname, names.primaryschool, \
             grades.subject, grades.code, grades.period, grades.grade \
         FROM \
             yeardata,grades,names \
@@ -179,19 +180,6 @@ class notak:
         elif x in ['G-A.Eleb.In.','A-A.Eleb.In.']:
             return 'AGbil'
 
-    # Same for ESO and Bach! Maybe is not important
-    # Used for using only current courses subjects
-    # but keep in mind
-    def coursenumber(self, x):
-        """
-        :param x: Full Course Name: 2. DBH
-        :return: Course Number: 2
-        """
-        #FIXME: Dirty hack
-        if x[0] not in ['p','P']:
-            return int(x[0])
-        else:
-            return 0
 
     def generatesheet(self, group):
         """
@@ -271,24 +259,9 @@ class notak:
         :param coursegroup: only needed to create the filename
         :return: None, it stores the plot in the filesystem
         '''
-        gtitle = coursegroup + " (" + self.year + ") " + self.periods[self.period - 1]
-        
-        #print(coursegroup)
-        #print(diagram)
-        #print(len(list(diagram.index)))
-        #barcolors = ['#6CA439', '#3074AE','#517B2B', '#36521D', '#007CC3']
-        #left = np.arange(len(list(diagram.index)))  # the x locations for the groups
-        #width = 0.27 
-        #for i in range(len(diagram.columns)):
-            #plt.bar(left+width*i,list(diagram.ix[:,i]),width,color=barcolors[i],label=diagram.columns[i])
-        #plt.xticks(np.array(left)+0.5, list(diagram.index))
-        #plt.xticks(rotation=90)
-        #plt.legend(loc='center left')
-        
-        # diagram.plot(kind='bar',title=gtitle).legend(loc='center left', bbox_to_anchor=(1,0.5))
-        diagram.plot(kind='bar', title=gtitle).legend(loc=4) #FIXME: Original, but changed in order to have fancier colors issue with pandas 0.17
+        gtitle = coursegroup + self.periods[self.period - 1] + " (" + self.year + ") "
+        diagram.plot(kind='bar', title=gtitle).legend(loc=4)
         plt.title(gtitle)
-        # plt.show()
         if func.__name__ == 'mean':
             plt.ylim(0, 10)
             plt.axhline(5)
@@ -298,6 +271,31 @@ class notak:
         figurefile = gtitle + '-' + func.__name__ + '-'+self.langg+'.png'
         plt.savefig(self.workdir+"/"+figurefile)
         plt.close()
+   
+    def generatePiePlot(self,missed,name):
+        p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
+        title= self.passtitle[self.langg]
+        title2 = self.promttitle[self.langg]
+        if self.debug:
+          print(name+";"+str(sum(prom))+";"+str(sum(peligro)))
+        t = sum(p)
+        p = [x *100/ t for x in p]
+        legendpie = ("<=2","3-4","=>5")
+        colors = ['#6CA439', '#FF9C42', '#FF4848']
+        plt.suptitle(name, fontsize=14)
+        plt.subplot(1,2,1)
+        plt.bar(left,prom,color='#6CA439')
+        plt.bar(left,riesgo,color='#FF9C42')
+        plt.bar(left,peligro,color='#FF4848')
+        plt.title(title)
+        plt.xticks(np.array(left)+0.5, legendhist)
+        plt.subplot(1,2,2)
+        plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
+        plt.axis('equal')
+        plt.title(title2)
+        plt.savefig(self.workdir + "/" + name + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
+        plt.close()
+        return p,prom,riesgo,peligro
    
     def generateCoursePlots(self, func):
         """
@@ -364,31 +362,32 @@ class notak:
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
-        dfyearscourses = self.df[self.df.bil=="AGbil"][["course","year"]].drop_duplicates()
-        dfcourses = n.df[(n.df.bil=="AGbil")&(n.df.year==n.year)][["course","year"]].drop_duplicates()
-        for lang in ['AG', 'D', None]:  # [df.lang.unique(),None]:
+        #dfyearscourses = self.df[self.df.bil=="AGbil"][["course","year"]].drop_duplicates() #gets courses and all years with bil
+        dfcourses = self.df[(self.df.bil=="AGbil")&(self.df.year==self.year)][["course","lang"]].drop_duplicates()
+        for lang in list(dfcourses.lang.unique())+[None]:  # [df.lang.unique(),None]:
+            print(lang)
             if lang:
                 dflang = self.df[self.df['lang'] == lang]
             else:
                 dflang = self.df
                 lang='All'
-            for course in dflang[dflang.year == self.year].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
+            for course in dflang[(dflang.year == self.year) & (dflang.bil=="AGbil")].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
                 if self.debug:
                    print(self.year, course)
-                coursedf = dflang[dflang['course'] == course]
-                courseyearebspivot = pd.pivot_table(coursedf, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"],aggfunc=func)
+                bilcoursedf = dflang[(dflang.course == course) & (dflang.bil=="AGbil")]
+                courseyearebspivot = pd.pivot_table(bilcoursedf, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"],aggfunc=func)
                 #Remove subjects that are not in the current period/course
                 courseyearebspivot =courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
                 selectperiods = courseyearebspivot.swaplevel(0, 2, axis=1)
                 selectyears = courseyearebspivot.swaplevel(0, 1, axis=1)
                 currenteb = selectperiods[self.periods[self.period - 1]]
                 
-                years = coursedf.year.unique()
+                years = bilcoursedf.year.unique()
                 years = years[-6:] if len(years) > 6 else years
                 
-                currenttext =  "(" + course + "-" + lang + ")" + self.cur[self.langg]
-                prevtext = "(" + course + "-" + lang + ")" + self.prev[self.langg]
-                avg5text = "("+ course + "-" + lang + ")" + self.avg5[self.langg]
+                currenttext =  "(" + course + "-" + lang + "-Bil)" + self.cur[self.langg]
+                prevtext = "(" + course + "-" + lang + "-Bil)" + self.prev[self.langg]
+                avg5text = "("+ course + "-" + lang + "-Bil)" + self.avg5[self.langg]
                 
                 diagram = pd.DataFrame()
                 diagram[currenttext] = currenteb[currenteb.keys()[-1]]
@@ -408,12 +407,115 @@ class notak:
                     diagram = diagram.append(
                         pd.DataFrame([(diagram[currenttext].mean(), diagram[avg5text].mean())], index=[self.avg[self.langg]],
                                      columns=[currenttext, avg5text]))
-                gtitle = course + '-' + lang
+                gtitle = course + '-' + lang + '-Bil'
+                
+                self.generatePlot(diagram,func,gtitle)
+
+    def generateCourseBilvsCooursePlots(self, func):
+        """
+        #FIXME: Description
+        This function generates plots for each course with bilingual classess vs The whole course
+        the last one for all of them for current year and period
+        It only takes the current period
+        :param func: The function to use for aggregating grades, either np.mean or self.percent
+        :return:
+        """
+        #dfyearscourses = self.df[self.df.bil=="AGbil"][["course","year"]].drop_duplicates() #gets courses and all years with bil
+        dfcourses = self.df[(self.df.bil=="AGbil")&(self.df.year==self.year)][["course","lang"]].drop_duplicates()
+        for lang in list(dfcourses.lang.unique())+[None]: 
+            if lang:
+                dflang = self.df[(self.df.lang == lang) & (self.df.year == self.year)]
+            else:
+                dflang = self.df[self.df.year == self.year]
+                lang='All'
+            for course in dflang[dflang.bil=="AGbil"].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
+                if self.debug:
+                   print(self.year, course)
+                bilcoursedf = dflang[(dflang.course == course) & (dflang.bil=="AGbil")  & (dflang.period==self.periods[self.period - 1])]
+                bilcourseyearebspivot = pd.pivot_table(bilcoursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
+                #Remove subjects that are not in the current period/course
+                bilcourseyearebspivot =bilcourseyearebspivot[bilcourseyearebspivot[bilcourseyearebspivot.columns[len(bilcourseyearebspivot.columns)-1]].notnull()]
+                
+                notbilcoursedf = dflang[(dflang.course == course) & (dflang.bil!="AGbil") & (dflang.period==self.periods[self.period - 1])] 
+                notbilcourseyearebspivot = pd.pivot_table(notbilcoursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
+                #Remove subjects that are not in the current period/course
+                notbilcourseyearebspivot =notbilcourseyearebspivot[notbilcourseyearebspivot[notbilcourseyearebspivot.columns[len(notbilcourseyearebspivot.columns)-1]].notnull()]
+                
+                coursedf = dflang[(dflang.course == course)  & (dflang.period==self.periods[self.period - 1])]
+                courseyearebspivot = pd.pivot_table(coursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
+                #Remove subjects that are not in the current period/course
+                courseyearebspivot =courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
+                
+                diagram = pd.merge(courseyearebspivot,bilcourseyearebspivot,left_index=True,right_index=True,suffixes=("_All","_SSBB"))
+                diagram = pd.merge(diagram,notbilcourseyearebspivot,left_index=True,right_index=True,suffixes=("","_NoSSBB"))
+                diagram.columns = ["Todo el curso","SSBB","sin SSBB"]
+                diagram.index.names = [self.subjects[self.langg]]
+                
+                gtitle = course + '-' + lang + '-Bil'
                 
                 self.generatePlot(diagram,func,gtitle)
 
     def generatePrymarySchoolPlots(self, func):
-        pass
+        """
+        #FIXME: Description
+        This function generates plots for the first course and each original school
+        the last one for all of them for current year and period
+        It only takes the current period
+        :param func: The function to use for aggregating grades, either np.mean or self.percent
+        :return:
+        """
+        #dfyearscourses = self.df[self.df.bil=="AGbil"][["course","year"]].drop_duplicates() #gets courses and all years with bil
+        course = '1 ESO'
+        for lang in self.df[(self.df.year==self.year) & (self.df.period==self.periods[self.period - 1]) & (self.df.course==course)].lang.unique():  #FIXME: Coursee hardcoded
+            if lang:
+                dflang = self.df[(self.df.lang == lang) & (self.df.year == self.year) & (self.df.period==self.periods[self.period - 1]) & (self.df.course== course)]
+                if self.debug:
+                   print(self.year, course)
+                coursedf = dflang
+                courseyearebspivot = pd.pivot_table(coursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
+                #Remove subjects that are not in the current period/course
+                courseyearebspivot = courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
+                
+                for ps in dflang.primaryschool.unique():
+                    schoolcoursedf = dflang[dflang.primaryschool == ps] 
+                    schoolcourseyearebspivot = pd.pivot_table(schoolcoursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
+                    #Remove subjects that are not in the current period/course
+                    schoolcourseyearebspivot =schoolcourseyearebspivot[schoolcourseyearebspivot[schoolcourseyearebspivot.columns[len(schoolcourseyearebspivot.columns)-1]].notnull()]
+                
+                    diagram = pd.merge(schoolcourseyearebspivot,courseyearebspivot,left_index=True,right_index=True,suffixes=("_"+ps,"_All"))
+                    diagram.columns = [ps,"Todos",]
+                    diagram.index.names = [self.subjects[self.langg]]
+                    
+                    gtitle = course + '-' + lang + '-' + ps
+                    
+                    self.generatePlot(diagram,func,gtitle)
+                    
+                    pt = pd.pivot_table(schoolcoursedf, index=["uniquename"], values=["grade"],aggfunc=self.lowerThan).fillna('')
+                    missed = self.notPassedStats(pt.grade)
+                    
+                    title = self.studpasstitle[self.langg]
+                    title2 = self.promttitle[self.langg]
+                    
+                    p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
+                    if self.debug:
+                        print(ps+";"+str(sum(prom))+";"+str(sum(peligro)))
+                    t = sum(p)
+                    p = [x *100/ t for x in p]
+                    legendpie = ("<=2","3-4","=>5")
+                    colors = ['#6CA439', '#FF9C42', '#FF4848']
+                    plt.suptitle(ps+" ("+lang+")", fontsize=14)
+                    plt.subplot(1,2,1)
+                    plt.bar(left,prom,color='#6CA439')
+                    plt.bar(left,riesgo,color='#FF9C42')
+                    plt.bar(left,peligro,color='#FF4848')
+                    plt.title(title)
+                    plt.xticks(np.array(left)+0.5, legendhist)
+                    plt.subplot(1,2,2)
+                    plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
+                    plt.axis('equal')
+                    plt.title(title2)
+                    plt.savefig(self.workdir + "/" + ps + "-" + lang + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
+                    plt.close()
 
 
     def generateGroupPlots(self, group, func):
@@ -668,14 +770,16 @@ class notak:
         print("</body></html>")
             
     # Pendienteak kurtsoan bertan agertzen dira, 2. batx badu 1. batx pendiente course=2. batx
-    def generateStatsStudent(self, year, ebal, mod=None, groups=None):
+    def generateStatsStudent(self,mod=None, groups=None):
         '''
         Generates a html file foreach group, which includes a table with each student marks (present and past periods)
         and also a graph with the same data plus a column with the average of the course
         '''
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        ebals = self.periods[:self.periods.index(ebal) + 1]
+        print(self.periods,self.period)
+        ebals = self.periods[:self.period]
+        print(ebals)
         legend = [e for e in ebals]
         legend.append("mailaren BB")
         groupsp = groups
@@ -685,19 +789,19 @@ class notak:
             #g = generateOR("cgroup", groups)
             #courses = [c[0] for c in cur.execute("SELECT DISTINCT course FROM results WHERE year=? AND period=? AND " + g, [year, ebals[-1]]).fetchall() if c[0].encode("utf8") not in self.excludedCourses]
             g1 = self.generateORpandas("self.df.cgroup", groups)
-            filter = "(self.df.year == self.year) & (self.df.period == ebal ) & " + g1
+            filter = "(self.df.year == self.year) & (self.df.period == self.period ) & " + g1
             courses = self.df[eval(filter)].coursename.unique()
         for course in sorted(courses):
             if self.debug:
                  print("course: ",course)
-            self.generateStatsCourse(year,ebals,mod, course)
+            self.generateStatsCourse(self.year,ebals,mod, course)
             groups = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)].cgroup.unique()
             if groupsp:
                 groups = [g for g in groups if g in groupsp]
             for group in groups:
                 if self.debug:
                    print("group: ",group)
-                subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent = self.generateStatsGroup(year, ebal, ebals, group)
+                subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent = self.generateStatsGroup(group)
                 sdf = self.df[["uniquename","fullname"]]
                 sdf.drop_duplicates(inplace=True)
                 #try to have student names not ids
@@ -709,7 +813,7 @@ class notak:
                 studentsnotpasses = studentsnotpasses[cols]
                 print(studentsnotpasses.head())
                 
-                students = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
+                students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""
                 ghtml = ""
                 for studentid in sorted(students):
@@ -717,7 +821,7 @@ class notak:
                     if self.debug:
                         print("student: ",studentid," name:" + studentname)
                     htmlmenu = htmlmenu + '<li><a href=\"#' + "-".join(str(studentid).split()) + '\">' + studentname + '</a></li>'
-                    html = self.generateStatsStudent2(year,ebal,ebals,studentid,studentname,groupgrades)
+                    html = self.generateStatsStudent2(studentid,studentname,groupgrades)
                     ghtml = ghtml + html
                 ghtml = '''
                 <!DOCTYPE html>
@@ -800,7 +904,7 @@ class notak:
         if self.debug:
            print("AVG: ",subjectscoursept,badsubjectscourse,coursegrades,courseaverage,subjectsavg)
 
-    def generateStatsGroup(self, year, ebal, ebals, group, diagrams=True):
+    def generateStatsGroup(self, group, diagrams=True):
         '''
         #FIXME: ebal and ebals!!
         for a year, period (ebals[-1], ebals should be alist), ebal is only used for titles. and a group
@@ -816,35 +920,36 @@ class notak:
         '''
         if self.debug:
            print(group)
-        lang = self.df[(self.df.year == year) & (self.df.cgroup == group)].lang.unique()[0]
+        lang = self.df[(self.df.year == self.year) & (self.df.cgroup == group)].lang.unique()[0]
         if self.debug:
            print("Eredua: ",lang)
-        students = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.cgroup == group)].uniquename.unique()
-        groupgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+        students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.cgroup == group)].uniquename.unique()
+        groupgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
         groupgrades.unstack()
         groupgrades.reset_index(level=0, inplace=True)
-        subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
+        subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
+        print(subjectsgrouppt.head())
         badsubjectsgroup = subjectsgrouppt[subjectsgrouppt.grade<70] #FIXME: 70 hardcoded
         badsubjectsgroup.unstack()
         badsubjectsgroup.reset_index(level=0,inplace=True)
         badsubjectsgroup.columns=["subject","%"]
-        studentsnotpasses = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1])  & (self.df.cgroup == group)],index=["uniquename"],values=["grade"],aggfunc=[self.lowerThan,np.mean]).fillna('')
+        studentsnotpasses = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["uniquename"],values=["grade"],aggfunc=[self.lowerThan,np.mean]).fillna('')
         studentsnotpasses.unstack()
         studentsnotpasses.reset_index(level=0,inplace=True)
         studentsnotpasses.columns=["uniquename","<5","avg"]
         studentsnotpasses.sort_values(by='<5',ascending=[0],inplace=True)      
         #self.generateGroupStatsPlots()#year, ebal, group=group)
         #pie = str(group) + "/" + year + "-" + ebal + str(group) + ".png"
-        pie = str(group) + "-" + ebal + "-" + self.langg + ".png"
-        mean = str(group) + " (" + self.year +") " + ebal + "-mean-" + self.langg + ".png"
-        percent = str(group) + " (" + self.year +") " + ebal + "-percent-" + self.langg + ".png"
+        pie = str(group) + "-" + self.periods[self.period-1] + "-" + self.langg + ".png"
+        mean = str(group) + " (" + self.year +") " + self.periods[self.period-1] + "-mean-" + self.langg + ".png"
+        percent = str(group) + " (" + self.year +") " + self.periods[self.period-1] + "-percent-" + self.langg + ".png"
         if diagrams:
             self.generateGroupPlots(group, np.mean) #For all plots, pass year and ebal. Or should they be global? optional argument..
             self.generateGroupPlots(group, self.percent)
             self.generateGroupStatsPlots(group)
         return subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent
 
-    def generateStatsStudent2(self,year,ebal,ebals,student,fullname,groupgrades):
+    def generateStatsStudent2(self,student,fullname,groupgrades):
         '''
         generates html with a table for the students with subjects and his marks side by side with all group marks
         studentgroupgrades is a DataFrame with those marks
@@ -852,7 +957,7 @@ class notak:
         #FIXME: subject is in basque
         if self.debug:
            print(student)
-        studentgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.uniquename == student)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+        studentgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.uniquename == student)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
         studentgrades.unstack()
         studentgrades.reset_index(level=0, inplace=True)
         studentgroupgrades = pd.merge(studentgrades,groupgrades,on="subject")
@@ -866,9 +971,9 @@ class notak:
         
         if self.debug:
            print(studentgroupgrades)
-        group = self.df[(self.df.uniquename==student)&(self.df.year==year)].cgroup.unique()[0]#FIXME: I don't like looking up the group this way, but I don't like to pass to much paramters either
+        group = self.df[(self.df.uniquename==student)&(self.df.year==self.year)].cgroup.unique()[0]#FIXME: I don't like looking up the group this way, but I don't like to pass to much paramters either
         self.createDir(self.workdir + group)
-        fname = group + "/" + year + "-" + ebal + "-" + student + ".png" #to use self.workdir + group + "/" + we need to create group dir first self.createDir(self.workdir + group)
+        fname = group + "/" + self.year + "-" + self.periods[self.period-1] + "-" + student + ".png" #to use self.workdir + group + "/" + we need to create group dir first self.createDir(self.workdir + group)
         plt.clf()
         studentgroupgrades.plot(kind="bar",x=studentgroupgrades.subject)
         plt.ylim(0, 10)
@@ -972,7 +1077,7 @@ if __name__ == "__main__":
     print("generate All Stats Plots")
     n.generateAllStatsPlots()
     print("generate Stats Student")
-    n.generateStatsStudent("2016-2017", "1. Ebaluazioa")#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
+    n.generateStatsStudent()#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
 
 #import notakeb
 #import numpy as np

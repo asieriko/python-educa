@@ -18,25 +18,24 @@ class notak:
 
 
     barcolors = ['#6CA439', '#3074AE','#517B2B', '#36521D', '#007CC3']
-    #piecolors = ['#6CA439', '#FF9C42', '#FF4848']
     plt.rc('axes', facecolor='#FFFEEE', edgecolor='#4E3629')
     plt.rc('patch', facecolor='#6CA439', edgecolor='#517B2B', linewidth=0)
     plt.rc('figure', figsize=(16,6))
     plt.rc('font', size=14.0)
-    plt.rc('axes', prop_cycle=(cycler('color',['#6CA439', '#3074AE','#517B2B', '#36521D', '#007CC3'])))
+    plt.rc('axes', prop_cycle=(cycler('color',barcolors)))
     plt.rc('lines', linewidth=4)    
-
-    def __init__(self, db, lang='es'):
+    pd.options.display.float_format = '{:,.1f}'.format
+    
+    def __init__(self, db, lang='es', debug=False):
         """
         Initiates the class
         :param db: the sqlite3 db file path
         :return: None
         """
         self.db = db
-        self.debug = False
+        self.debug=debug
         self.periods = []
         self.workdir = ""
-        self.excludedCourses = []
         self.year = ""
         self.langg = lang
         self.subjectsavg = defaultdict(defaultdict)
@@ -50,28 +49,24 @@ class notak:
         html = ""
 
 
-    def configure(self, year, periods, unekoeb=1, excludedCourses=[], debug=False):
+    def getData(self, year, periods, period=1, excludedCourses=[]):
         """
         Configures course and group ploting
         :param year: The year whose marks will be plotted
         :param periods: Evaluative period list
-        :param unekoeb: Current period as int (as index+1 for the list)
+        :param period: Current period as int (as index+1 for the list)
         :param excludedCourses: Courses that won't generate a plot
-        :param baliogabekolaburdurak: Abreviations that won't generate a plot
         :return:
         """
-        self.debug=debug
         self.year = year
         self.periods = periods
-        #self.excludedCourses = [str(ec.decode()) for ec in excludedCourses]
-        self.excludedCourses =  excludedCourses
+        self.period = period
+        if self.period > len(self.periods):#FIXME: raise ValueError
+            raise IndexError("Error: period number > len(periods)")
         notcourses = "NOT grades.course = '" + ("' AND NOT grades.course = '").join(
             excludedCourses) + "'"  # The query works if excludedCourses = []
-        self.ebnumber = unekoeb
-        if self.ebnumber > len(self.periods):#FIXME: raise ValueError
-            print("Error: ebnumber > eb kopurua")
         ebselect = "grades.period = '" + ("' OR grades.period = '").join(
-            self.periods[:self.ebnumber]) + "'"
+            self.periods[:self.period]) + "'"
         con = sqlite3.connect(self.db)
         sql="SELECT yeardata.year, yeardata.course AS coursename, yeardata.cgroup, yeardata.lang,\
             yeardata.uniquename, names.fullname, \
@@ -87,19 +82,19 @@ class notak:
         if self.debug:
            print(sql)
         self.df = pd.read_sql(sql,con)
-        sqlsubjects = "SELECT * FROM abreviations"
-        dfsubjects = pd.read_sql(sqlsubjects,con)
-        dfsubjects.drop_duplicates(subset='code',keep='last',inplace=True)
-        con.close()
-        self.df = pd.merge(self.df,dfsubjects,on="code",how="left")#FIXME: Somethin more global would be right
-        if self.debug:
-           print(self.df.head())
-        #self.df.drop(['id', 'name'], inplace=True, axis=1)
         self.df.grade = self.df.grade.astype(int)
         if self.debug:
            print(self.df.head())
+        sqlsubjects = "SELECT * FROM abreviations"
+        dfsubjects = pd.read_sql(sqlsubjects,con)
+        dfsubjects.drop_duplicates(subset='code',keep='last',inplace=True) #FIXME: Not sure if it gets the last \
+        #    because it depends on the database index
+        con.close()
+        self.df = pd.merge(self.df,dfsubjects,on="code",how="left")#FIXME: Somethin more global would be right
         self.df['bil'] = self.df['lang'].map(self.modeloBil)
         self.df['lang'] = self.df['lang'].map(self.modelo)
+        if self.debug:
+           print(self.df.head())
 
     def generateFinalGrade(self):
         '''
@@ -110,7 +105,7 @@ class notak:
         newrows = grouped.apply(self.finalgrade)
         self.df = pd.concat([self.df,newrows])
         self.df.reset_index(drop=True,inplace=True)
-        return newrows #Not needed
+        return newrows #Not needed, interesting for testing?
 
     def finalgrade(self,x):
         if 'Ohiz kanpoko Ebaluazioa' in x[["period","grade"]].period.unique():
@@ -206,7 +201,7 @@ class notak:
         :param group: Name of the group
         """
         return pd.pivot_table(self.df[(self.df.cgroup == group) & (self.df.year == self.year) & (
-        self.df.period == self.periods[self.ebnumber - 1])], index=["uniquename"], values=["grade"],
+        self.df.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                               columns=["subject"]).fillna('')
 
 
@@ -240,7 +235,7 @@ class notak:
         df = pd.read_sql("select yeardata.year,yeardata.course,yeardata.cgroup,yeardata.lang,yeardata.uniquename,grades.subject,grades.period,grades.grade from yeardata,grades where yeardata.year=grades.year and yeardata.uniquename=grades.uniquename and grades.course=yeardata.course and yeardata.year='"+year+"' and grades.period='"+period+"'",con)
         return df
 
-    def getdata(self,group):
+    def getGroupPromStats(self,group):
         '''
         Generates stats about failures in the specified group, for the configured year and period
         [66.66666666666667, 13.333333333333334, 20.0], 2.2666666666666666
@@ -248,7 +243,7 @@ class notak:
         :return: p - a list with the percent of students in each situation (promoting <= 2 susp, risk 3-4 susp, danger > 4 susp) and the average of fails for students
         '''
         pt = pd.pivot_table(self.df[(self.df.cgroup == group) & (self.df.year == self.year) & (
-        self.df.period == self.periods[self.ebnumber - 1])], index=["uniquename"], values=["grade"],
+        self.df.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                           aggfunc=self.lowerThan).fillna('')
         if self.debug:
            print("Get data for group: " + group)
@@ -265,7 +260,7 @@ class notak:
         con = sqlite3.connect(self.db)
         df = pd.read_sql("select giroa, material, cleaness, studentstudent, studentteacher, period, cgroup from tutorinfo",con)
         for group in self.df[self.df['year'] == self.year].cgroup.unique():
-            p,m=self.getdata(group)  
+            p,m=self.getGroupPromStats(group)  
         return df
 
     def generatePlot(self,diagram,func,coursegroup):
@@ -276,7 +271,7 @@ class notak:
         :param coursegroup: only needed to create the filename
         :return: None, it stores the plot in the filesystem
         '''
-        gtitle = coursegroup + " (" + self.year + ") " + self.periods[self.ebnumber - 1]
+        gtitle = coursegroup + " (" + self.year + ") " + self.periods[self.period - 1]
         
         #print(coursegroup)
         #print(diagram)
@@ -320,8 +315,6 @@ class notak:
                 dflang = self.df
                 lang='All'
             for course in dflang[dflang.year == self.year].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
-                if course in self.excludedCourses:
-                    continue
                 if self.debug:
                    print(self.year, course)
                 coursedf = dflang[dflang['course'] == course]
@@ -330,7 +323,7 @@ class notak:
                 courseyearebspivot =courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
                 selectperiods = courseyearebspivot.swaplevel(0, 2, axis=1)
                 selectyears = courseyearebspivot.swaplevel(0, 1, axis=1)
-                currenteb = selectperiods[self.periods[self.ebnumber - 1]]
+                currenteb = selectperiods[self.periods[self.period - 1]]
                 
                 years = coursedf.year.unique()
                 years = years[-6:] if len(years) > 6 else years
@@ -345,8 +338,8 @@ class notak:
                    diagram[avg5text] = currenteb[years].mean(axis=1)
                 else:
                    diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
-                if self.ebnumber != 1:
-                    previouseb = selectperiods[self.periods[self.ebnumber - 2]]
+                if self.period != 1:
+                    previouseb = selectperiods[self.periods[self.period - 2]]
                     diagram[prevtext] = previouseb[previouseb.keys()[-1]]
                     diagram=diagram[[prevtext,currenttext,avg5text]]
                     diagram = diagram.append(
@@ -380,8 +373,6 @@ class notak:
                 dflang = self.df
                 lang='All'
             for course in dflang[dflang.year == self.year].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
-                if course in self.excludedCourses:
-                    continue
                 if self.debug:
                    print(self.year, course)
                 coursedf = dflang[dflang['course'] == course]
@@ -390,7 +381,7 @@ class notak:
                 courseyearebspivot =courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
                 selectperiods = courseyearebspivot.swaplevel(0, 2, axis=1)
                 selectyears = courseyearebspivot.swaplevel(0, 1, axis=1)
-                currenteb = selectperiods[self.periods[self.ebnumber - 1]]
+                currenteb = selectperiods[self.periods[self.period - 1]]
                 
                 years = coursedf.year.unique()
                 years = years[-6:] if len(years) > 6 else years
@@ -405,8 +396,8 @@ class notak:
                    diagram[avg5text] = currenteb[years].mean(axis=1)
                 else:
                    diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
-                if self.ebnumber != 1:
-                    previouseb = selectperiods[self.periods[self.ebnumber - 2]]
+                if self.period != 1:
+                    previouseb = selectperiods[self.periods[self.period - 2]]
                     diagram[prevtext] = previouseb[previouseb.keys()[-1]]
                     diagram=diagram[[prevtext,currenttext,avg5text]]
                     diagram = diagram.append(
@@ -443,14 +434,14 @@ class notak:
         levelpivot = pd.pivot_table(levelpivot, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"], aggfunc=func)
         levelperiods = levelpivot.swaplevel(0, 2, axis=1)
         levelyears = levelpivot.swaplevel(0, 1, axis=1)
-        levelcurrent= levelperiods[self.periods[self.ebnumber - 1]]
+        levelcurrent= levelperiods[self.periods[self.period - 1]]
         
         #Get group info
         dfpivot = self.df[(self.df['cgroup'] == group) & (self.df['year'] == self.year)]
         test = pd.pivot_table(dfpivot, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"], aggfunc=func)
         groupperiods = test.swaplevel(0, 2, axis=1)
         groupyears = test.swaplevel(0, 1, axis=1) #Not used?
-        currenteb = groupperiods[self.periods[self.ebnumber - 1]]
+        currenteb = groupperiods[self.periods[self.period - 1]]
         
         currenttext =  "(" + group + ")" + self.cur[self.langg]
         prevtext = "(" + group + ")" + self.prev[self.langg]
@@ -459,9 +450,9 @@ class notak:
         diagram[currenttext] = currenteb[currenteb.keys()[-1]]
         diagram[levellangtext] = levelcurrent[currenteb.keys()[-1]]
         
-        if self.ebnumber != 1:
+        if self.period != 1:
             #Append previos eb infor for selected group  
-            previouseb = groupperiods[self.periods[self.ebnumber - 2]]
+            previouseb = groupperiods[self.periods[self.period - 2]]
             diagram[prevtext] = previouseb[previouseb.keys()[-1]]
             diagram=diagram[[prevtext,currenttext,levellangtext]]
             diagram = diagram.append(pd.DataFrame([(diagram[prevtext].mean(), diagram[currenttext].mean(), diagram[levellangtext].mean())], index=[self.avg[self.langg]], columns=[prevtext, currenttext, levellangtext]))
@@ -485,7 +476,7 @@ class notak:
 
     def generateGroupStatsPlots(self,group):
         pt = pd.pivot_table(self.df[(self.df.cgroup == group) & (self.df.year == self.year) & (
-        self.df.period == self.periods[self.ebnumber - 1])], index=["uniquename"], values=["grade"],
+        self.df.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                             aggfunc=self.lowerThan).fillna('')
         if self.debug:
           print(pt)
@@ -510,7 +501,7 @@ class notak:
         plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
         plt.axis('equal')
         plt.title(title2)
-        plt.savefig(self.workdir + "/" + group + "-" + self.periods[self.ebnumber-1] + "-" + self.langg + ".png")
+        plt.savefig(self.workdir + "/" + group + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
         plt.close()
         
     def generateAllGroupStatsPlots(self):
@@ -564,7 +555,7 @@ class notak:
     def generateAllStatsPlots(self,year=None,period=None):
         lang = 'eu'
         if not year: year = self.year
-        if not period: period = self.periods[self.ebnumber - 1]
+        if not period: period = self.periods[self.period - 1]
         pt = pd.pivot_table(self.df[(self.df.year == year) & (self.df.period == period)], index=["uniquename"], values=["grade"], aggfunc=self.lowerThan).fillna('')
         missed = self.notPassedStats(pt.grade)
         p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
@@ -592,7 +583,7 @@ class notak:
                 if self.debug:
                     print(course,lang)
                 pt = pd.pivot_table(dflang[(dflang.coursename == course) & (dflang.year == self.year) & (
-                dflang.period == self.periods[self.ebnumber - 1])], index=["uniquename"], values=["grade"],
+                dflang.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                                   aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
                 title = self.studpasstitle[self.langg]
@@ -602,7 +593,7 @@ class notak:
                 p = [x *100/ t for x in p]
                 legendpie = ("<=2","3-4","=>5")
                 colors = ['#6CA439', '#FF9C42', '#FF4848']
-                plt.suptitle(course + "-" + self.periods[self.ebnumber - 1], fontsize=14)
+                plt.suptitle(course + "-" + self.periods[self.period - 1], fontsize=14)
                 plt.subplot(1,2,1)
                 plt.bar(left,prom,color='#6CA439')
                 plt.bar(left,riesgo,color='#FF9C42')
@@ -613,7 +604,7 @@ class notak:
                 plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
                 plt.axis('equal')
                 plt.title(title2)
-                plt.savefig(self.workdir + "/" + course + "-" + lang + "-" + self.periods[self.ebnumber-1] + "-" + self.langg + ".png")
+                plt.savefig(self.workdir + "/" + course + "-" + lang + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
                 plt.close()
         return allg
 
@@ -710,8 +701,13 @@ class notak:
                 sdf = self.df[["uniquename","fullname"]]
                 sdf.drop_duplicates(inplace=True)
                 #try to have student names not ids
-                groupgrades = pd.merge(groupgrades,sdf,on="uniquename")
-                print(groupgrades.head())
+                #print(sdf.head())
+                #print(groupgrades.head())
+                studentsnotpasses = pd.merge(studentsnotpasses,sdf,on="uniquename")
+                cols = studentsnotpasses.columns.tolist() 
+                cols = cols[-1:] + cols[1:-1]
+                studentsnotpasses = studentsnotpasses[cols]
+                print(studentsnotpasses.head())
                 
                 students = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""
@@ -953,7 +949,7 @@ if __name__ == "__main__":
     for lang in ['eu','es']:
       n = notak(db,lang)
       n.setWorkDir("1ebaluaketa16-17")
-      n.configure(year, ebaluaketak, 1, baliogabekokurtsoak)
+      n.getData(year, ebaluaketak, 1, baliogabekokurtsoak)
       #n.removepending()
       print("course np.mean")
       n.generateCoursePlots(np.mean)
@@ -975,14 +971,14 @@ if __name__ == "__main__":
     n.generateCourseStatsPlots()
     print("generate All Stats Plots")
     n.generateAllStatsPlots()
-    print("generate STats Student")
+    print("generate Stats Student")
     n.generateStatsStudent("2016-2017", "1. Ebaluazioa")#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
 
 #import notakeb
 #import numpy as np
 #n = notakeb.notak("mendillorriN.db","eu")
 #n.setWorkDir("1ebaluaketa15-16")
-#n.configure("2015-2016", ["1. Ebaluazioa"], 1)
+#n.getData("2015-2016", ["1. Ebaluazioa"], 1)
 #n.df = n.df[n.df.year!="2016-2017"]
 ##n.generateCoursePlots(np.mean)
 ##n.promcourseplots("1. Ebaluazioa")

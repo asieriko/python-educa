@@ -10,6 +10,7 @@ from _collections import defaultdict
 from matplotlib import rcParams
 #plt.style.use('ggplot')
 from cycler import cycler
+import textdoc as td
 rcParams.update({'figure.autolayout': True}) #TODO it makes small plots with very big labels, I've to figure how to change subject names with abreviations
 # in each? plt.gca().tight_layout()
 
@@ -271,10 +272,11 @@ class notak:
         figurefile = gtitle + '-' + func.__name__ + '-'+self.langg+'.png'
         plt.savefig(self.workdir+"/"+figurefile)
         plt.close()
+        return figurefile
    
     def generatePiePlot(self,missed,name):
         p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
-        title= self.passtitle[self.langg]
+        title= self.studpasstitle[self.langg]
         title2 = self.promttitle[self.langg]
         if self.debug:
           print(name+";"+str(sum(prom))+";"+str(sum(peligro)))
@@ -293,9 +295,10 @@ class notak:
         plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
         plt.axis('equal')
         plt.title(title2)
-        plt.savefig(self.workdir + "/" + name + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
+        filename = self.workdir + "/" + name + "-" + self.periods[self.period-1] + "-" + self.langg + ".png"
+        plt.savefig(filename)
         plt.close()
-        return p,prom,riesgo,peligro
+        return p,prom,riesgo,peligro,filename
    
     def generateCoursePlots(self, func):
         """
@@ -488,34 +491,32 @@ class notak:
                     
                     gtitle = course + '-' + lang + '-' + ps
                     
-                    self.generatePlot(diagram,func,gtitle)
+                    barplot = self.generatePlot(diagram,func,gtitle)
                     
                     pt = pd.pivot_table(schoolcoursedf, index=["uniquename"], values=["grade"],aggfunc=self.lowerThan).fillna('')
                     missed = self.notPassedStats(pt.grade)
+                    p,prom,riesgo,peligro,pietitle = self.generatePiePlot(missed,ps+" ("+lang+")")
+                                        
+                    doc = td.textdoc()
+                    doc.addTitle(ps + " (" + lang + ")")
+                    doc.addParagraph("Resumen de las calificaciones obtenidas en 1º ESO en el IES Mendillorri")
+                    doc.addTitle2("Resumen de asignaturas")
+                    doc.addParagraph("Comparativa datos de los alumnos de las escuela y la media de 1º ESO")
+                    doc.addImage(self.workdir + "/" + barplot,"resumen de calificaciones")
                     
-                    title = self.studpasstitle[self.langg]
-                    title2 = self.promttitle[self.langg]
-                    
-                    p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
-                    if self.debug:
-                        print(ps+";"+str(sum(prom))+";"+str(sum(peligro)))
-                    t = sum(p)
-                    p = [x *100/ t for x in p]
-                    legendpie = ("<=2","3-4","=>5")
-                    colors = ['#6CA439', '#FF9C42', '#FF4848']
-                    plt.suptitle(ps+" ("+lang+")", fontsize=14)
-                    plt.subplot(1,2,1)
-                    plt.bar(left,prom,color='#6CA439')
-                    plt.bar(left,riesgo,color='#FF9C42')
-                    plt.bar(left,peligro,color='#FF4848')
-                    plt.title(title)
-                    plt.xticks(np.array(left)+0.5, legendhist)
-                    plt.subplot(1,2,2)
-                    plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
-                    plt.axis('equal')
-                    plt.title(title2)
-                    plt.savefig(self.workdir + "/" + ps + "-" + lang + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
-                    plt.close()
+                    ptall = pd.pivot_table(schoolcoursedf, index=["fullname"], columns=["name_eu"],values=["grade"]).fillna('')
+                    ptavg = pd.pivot_table(schoolcoursedf, index=["fullname"],values=["grade"],aggfunc=np.mean).fillna('')
+                    ptsusp = pd.pivot_table(schoolcoursedf, index=["fullname"],values=["grade"],aggfunc=self.lowerThan).fillna('')
+                    pt = pd.merge(ptall,ptavg,left_index=True,right_index=True)
+                    pt = pd.merge(pt,ptsusp,left_index=True,right_index=True)
+                    pt.append(pt.mean(), ignore_index=True)
+                    pt.reset_index(inplace=True)
+                    doc.addTable(pt.values,["Nombre"]+[i[1] for i in pt.columns[1:-2]]+["media","n susp"])                    
+                    doc.addTitle2("Datos de aprobados y promoción")
+                    doc.addParagraph("Número de suspensos por alumno y situación de promoción")
+                    doc.addImage(pietitle,"resumen de promoción")
+                    doc.addImageHeaderFooter()
+                    doc.save(ps+lang+".odt")
 
 
     def generateGroupPlots(self, group, func):
@@ -583,28 +584,30 @@ class notak:
         if self.debug:
           print(pt)
         missed = self.notPassedStats(pt.grade)
-        title = self.studpasstitle[self.langg]
-        title2 = self.promttitle[self.langg]
-        p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
-        if self.debug:
-          print(group+";"+str(sum(prom))+";"+str(sum(peligro)))
-        t = sum(p)
-        p = [x *100/ t for x in p]
-        legendpie = ("<=2","3-4","=>5")
-        colors = ['#6CA439', '#FF9C42', '#FF4848']
-        plt.suptitle(group, fontsize=14)
-        plt.subplot(1,2,1)
-        plt.bar(left,prom,color='#6CA439')
-        plt.bar(left,riesgo,color='#FF9C42')
-        plt.bar(left,peligro,color='#FF4848')
-        plt.title(title)
-        plt.xticks(np.array(left)+0.5, legendhist)
-        plt.subplot(1,2,2)
-        plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
-        plt.axis('equal')
-        plt.title(title2)
-        plt.savefig(self.workdir + "/" + group + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
-        plt.close()
+        self.generatePiePlot(missed,group)
+        #FIXME: Test if it works and delete
+        #title = self.studpasstitle[self.langg]
+        #title2 = self.promttitle[self.langg]
+        #p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
+        #if self.debug:
+          #print(group+";"+str(sum(prom))+";"+str(sum(peligro)))
+        #t = sum(p)
+        #p = [x *100/ t for x in p]
+        #legendpie = ("<=2","3-4","=>5")
+        #colors = ['#6CA439', '#FF9C42', '#FF4848']
+        #plt.suptitle(group, fontsize=14)
+        #plt.subplot(1,2,1)
+        #plt.bar(left,prom,color='#6CA439')
+        #plt.bar(left,riesgo,color='#FF9C42')
+        #plt.bar(left,peligro,color='#FF4848')
+        #plt.title(title)
+        #plt.xticks(np.array(left)+0.5, legendhist)
+        #plt.subplot(1,2,2)
+        #plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
+        #plt.axis('equal')
+        #plt.title(title2)
+        #plt.savefig(self.workdir + "/" + group + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
+        #plt.close()
         
     def generateAllGroupStatsPlots(self):
         """
@@ -688,26 +691,28 @@ class notak:
                 dflang.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                                   aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
-                title = self.studpasstitle[self.langg]
-                title2 = self.promttitle[self.langg]
-                p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
-                t = sum(p)
-                p = [x *100/ t for x in p]
-                legendpie = ("<=2","3-4","=>5")
-                colors = ['#6CA439', '#FF9C42', '#FF4848']
-                plt.suptitle(course + "-" + self.periods[self.period - 1], fontsize=14)
-                plt.subplot(1,2,1)
-                plt.bar(left,prom,color='#6CA439')
-                plt.bar(left,riesgo,color='#FF9C42')
-                plt.bar(left,peligro,color='#FF4848')
-                plt.title(title)
-                plt.xticks(np.array(left)+0.5, legendhist)
-                plt.subplot(1,2,2)
-                plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
-                plt.axis('equal')
-                plt.title(title2)
-                plt.savefig(self.workdir + "/" + course + "-" + lang + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
-                plt.close()
+                self.generatePiePlot(missed,course)
+                #FIXME:Test and delete
+                #title = self.studpasstitle[self.langg]
+                #title2 = self.promttitle[self.langg]
+                #p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
+                #t = sum(p)
+                #p = [x *100/ t for x in p]
+                #legendpie = ("<=2","3-4","=>5")
+                #colors = ['#6CA439', '#FF9C42', '#FF4848']
+                #plt.suptitle(course + "-" + self.periods[self.period - 1], fontsize=14)
+                #plt.subplot(1,2,1)
+                #plt.bar(left,prom,color='#6CA439')
+                #plt.bar(left,riesgo,color='#FF9C42')
+                #plt.bar(left,peligro,color='#FF4848')
+                #plt.title(title)
+                #plt.xticks(np.array(left)+0.5, legendhist)
+                #plt.subplot(1,2,2)
+                #plt.pie(p,labels=legendpie,autopct='%1.1f%%',colors=colors)
+                #plt.axis('equal')
+                #plt.title(title2)
+                #plt.savefig(self.workdir + "/" + course + "-" + lang + "-" + self.periods[self.period-1] + "-" + self.langg + ".png")
+                #plt.close()
         return allg
 
     def generateYearsAllGoodSubjects(self,period,percentaje,years=None):
@@ -777,9 +782,7 @@ class notak:
         '''
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        print(self.periods,self.period)
         ebals = self.periods[:self.period]
-        print(ebals)
         legend = [e for e in ebals]
         legend.append("mailaren BB")
         groupsp = groups
@@ -811,7 +814,6 @@ class notak:
                 cols = studentsnotpasses.columns.tolist() 
                 cols = cols[-1:] + cols[1:-1]
                 studentsnotpasses = studentsnotpasses[cols]
-                print(studentsnotpasses.head())
                 
                 students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""

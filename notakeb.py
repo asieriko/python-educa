@@ -533,6 +533,7 @@ class notak:
         for dept in depts:
             doc = td.textdoc()
             doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
+            print(dept)
             doc.addTitle("Departamento: " + dept)
             doc.addParagraph("Este documento contiene un resumen de las calificaciones del departamento.")
             doc.addParagraph("Contiene 3 apartados con la media de las calificaciones de cada asignatura del departamento y con el porcentaje de alumnos aprobados de cada una de ellas, comparado con la media de los últimos 5 años. El primero de ellasde ambos modelos juntos, los dos siguientes con los de AG y D por separado.")
@@ -851,7 +852,7 @@ class notak:
         print("</body></html>")
             
     # Pendienteak kurtsoan bertan agertzen dira, 2. batx badu 1. batx pendiente course=2. batx
-    def generateStatsAllStudents(self,mod=None, groups=None):
+    def generateStatsAllStudents(self,mod=None, groups=None,doc=False):
         '''
         Generates a html file foreach group, which includes a table with each student marks (present and past periods)
         and also a graph with the same data plus a column with the average of the course
@@ -890,12 +891,32 @@ class notak:
                 students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""
                 ghtml = ""
+                if doc:
+                    doc = td.textdoc()
+                    doc.addTitle("Resumen del grupo: " +group)
+                    doc.addTitle2("Taldeko emaitzak")
+                    doc.addTitle3("Promozioa")
+                    doc.addImage(self.workdir+pie,group+" promotion")
+                    doc.addTitle3("Ikasleen suspentso kopurua eta notaren Batazbestekoa")
+                    snp = studentsnotpasses.set_index("fullname",drop=True)
+                    doc.addTable(snp.reset_index().values,["Student"]+list(studentsnotpasses.columns[1:]))
+                    doc.addTitle3("Batazbestekoa")
+                    doc.addImage(self.workdir+mean,group+" average grades")
+                    doc.addTitle3("Gaindituen ehunekoak")
+                    doc.addImage(self.workdir+percent,group+" subjects pass percent")
+                    doc.addTitle3("ehuneko 70 baino gainditu gutxiago duten ikasgaiak")
+                    if not badsubjectsgroup.empty:
+                        bsg = badsubjectsgroup.set_index("subject",drop=True)
+                        doc.addTable(bsg.reset_index().values,["Subject"]+list(badsubjectsgroup.columns[1:]))
+                    doc.addTitle2("Ikasleen emaitzak")
+                else:
+                    doc = False
                 for studentid in sorted(students):
                     studentname = str(sdf[sdf.uniquename==studentid].fullname.item())
                     if self.debug:
                         print("student: ",studentid," name:" + studentname)
                     htmlmenu = htmlmenu + '<li><a href=\"#' + "-".join(str(studentid).split()) + '\">' + studentname + '</a></li>'
-                    html = self.generateStatsStudent(studentid,studentname,groupgrades)
+                    html = self.generateStatsStudent(studentid,studentname,groupgrades,doc)
                     ghtml = ghtml + html
                 ghtml = '''
                 <!DOCTYPE html>
@@ -954,6 +975,8 @@ class notak:
                 f = open(self.workdir + group + ".html", 'w')
                 f.write(ghtml) #  f.write(ghtml.encode("utf8"))
                 f.close()
+                if doc:
+                    doc.save(self.workdir + group + ".odt")
 
     def generateStatsCourse(self, year, ebals, mod=None, course=None):
         if self.debug:
@@ -1002,7 +1025,6 @@ class notak:
         groupgrades.unstack()
         groupgrades.reset_index(level=0, inplace=True)
         subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
-        print(subjectsgrouppt.head())
         badsubjectsgroup = subjectsgrouppt[subjectsgrouppt.grade<70] #FIXME: 70 hardcoded
         badsubjectsgroup.unstack()
         badsubjectsgroup.reset_index(level=0,inplace=True)
@@ -1015,15 +1037,15 @@ class notak:
         #self.generateGroupStatsPlots()#year, ebal, group=group)
         #pie = str(group) + "/" + year + "-" + ebal + str(group) + ".png"
         pie = str(group) + "-" + self.periods[self.period-1] + "-" + self.langg + ".png"
-        mean = str(group) + " (" + self.year +") " + self.periods[self.period-1] + "-mean-" + self.langg + ".png"
-        percent = str(group) + " (" + self.year +") " + self.periods[self.period-1] + "-percent-" + self.langg + ".png"
+        mean = str(group) + ' - ' + self.periods[self.period - 1] + " (" + self.year + ") " + "-mean-" + self.langg + ".png"
+        percent = str(group) + ' - ' + self.periods[self.period - 1] + " (" + self.year + ") " + "-percent-" + self.langg + ".png"
         if diagrams:
             self.generateGroupPlots(group, np.mean) #For all plots, pass year and ebal. Or should they be global? optional argument..
             self.generateGroupPlots(group, self.percent)
             self.generateGroupStatsPlots(group)
         return subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent
 
-    def generateStatsStudent(self,student,fullname,groupgrades):
+    def generateStatsStudent(self,student,fullname,groupgrades,doc=False):
         '''
         generates html with a table for the students with subjects and his marks side by side with all group marks
         studentgroupgrades is a DataFrame with those marks
@@ -1054,6 +1076,11 @@ class notak:
         plt.axhline(5)
         plt.savefig(self.workdir + fname, format="png")
         plt.close()
+        if doc:
+            doc.addTitle3(fullname)
+            studentgradesdoc = studentgrades.set_index("subject",drop=True)
+            doc.addTable(studentgradesdoc.reset_index().values,["Subject"]+list(studentgradesdoc.columns))
+            doc.addImage(self.workdir+fname,fullname+" grades")
         html = '''
         <div class="student">
             <h1 style=\"clear: both;\" id='%s'></h1>
@@ -1130,43 +1157,27 @@ if __name__ == "__main__":
       n.setWorkDir("1ebaluaketa16-17")
       n.getData(year, ebaluaketak, 1, baliogabekokurtsoak)
       #n.removepending()
-      print("course np.mean")
-      n.generateCoursePlots(np.mean)
-      print("course percent")
-      n.generateCoursePlots(n.percent)
-      n.promcourseplots("1. Ebaluazioa")
-      taldeak = n.df[n.df.year == year].cgroup.unique()
-      for t in taldeak:
-        n.generateGroupStatsPlots(t)
-      n.generateAllGroupStatsPlots()
-      taldeak = n.df[n.df.year == year].cgroup.unique()
-      for t in taldeak:
-        n.generatePassPercent("1. Ebaluazioa",year,t)
-      n.generateAllGroupPlots(np.mean)
-      n.generateAllGroupPlots(n.percent)
-      n.generateCoursePlots(np.mean)
-      n.generateCoursePlots(n.percent)
+      #print("course np.mean")
+      #n.generateCoursePlots(np.mean)
+      #print("course percent")
+      #n.generateCoursePlots(n.percent)
+      #n.promcourseplots("1. Ebaluazioa")
+      #taldeak = n.df[n.df.year == year].cgroup.unique()
+      #for t in taldeak:
+        #n.generateGroupStatsPlots(t)
+      #n.generateAllGroupStatsPlots()
+      #taldeak = n.df[n.df.year == year].cgroup.unique()
+      #for t in taldeak:
+        #n.generatePassPercent("1. Ebaluazioa",year,t)
+      #n.generateAllGroupPlots(np.mean)
+      #n.generateAllGroupPlots(n.percent)
+      #n.generateCoursePlots(np.mean)
+      #n.generateCoursePlots(n.percent)
     
-    n.generateCourseStatsPlots()
-    print("generate All Stats Plots")
-    n.generateAllStatsPlots()
-    print("generate Stats Student")
-    n.generateStatsAllStudents()#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
-
-#import notakeb
-#import numpy as np
-#n = notakeb.notak("mendillorriN.db","eu")
-#n.setWorkDir("1ebaluaketa15-16")
-#n.getData("2015-2016", ["1. Ebaluazioa"], 1)
-#n.df = n.df[n.df.year!="2016-2017"]
-##n.generateCoursePlots(np.mean)
-##n.promcourseplots("1. Ebaluazioa")
-##n.generateAllGroupPlots(np.mean)
-#taldeak = n.df[n.df.year == "2015-2016"].cgroup.unique()
-#for t in taldeak:
-    #n.generateGroupStatsPlots(t)
-#n.generateAllGroupStatsPlots()
-#taldeak = n.df[n.df.year == "2015-2016"].cgroup.unique()
-#for t in taldeak:
-    #n.generatePassPercent("Azken Ebaluazioa","2015-2016",t)
-#n.generateStatsAllStudents("2015-2016","1. Ebaluazioa")
+    #n.generateCourseStatsPlots()
+    #print("generate All Stats Plots")
+    #n.generateAllStatsPlots()
+    #print("generate Stats Student")
+    n.generateStatsAllStudents(doc=True)
+    n.generatePrymarySchoolPlots(np.mean)
+    n.generateDeptPlots([np.mean,n.percent])

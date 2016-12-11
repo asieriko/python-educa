@@ -83,8 +83,8 @@ class database:
         self.excludedCourses =  excludedCourses
         notcourses = "NOT results.course = '" + ("' AND NOT results.course = '").join(
             excludedCourses) + "'"  # The query works if excludedCourses = []
-        notabreviations = "NOT abreviations.course = '" + (
-        "' AND NOT  abreviations.course = '").join(
+        notabreviations = "NOT subjects.course = '" + (
+        "' AND NOT  subjects.course = '").join(
             baliogabekolaburdurak) + "'"  # The query works if baliogabekolaburdurak = []
         self.ebnumber = unekoeb
         if self.ebnumber > len(self.csv_periods):
@@ -93,8 +93,8 @@ class database:
         ebselect = "results.period = '" + ("' OR results.period = '").join(
             self.csv_periods[:self.ebnumber]) + "'"
         con = sqlite3.connect(self.db)
-        self.df = pd.read_sql("SELECT *, abreviations.course as subjcourse "
-                              "FROM results INNER JOIN  abreviations ON results.subject=abreviations.name "
+        self.df = pd.read_sql("SELECT *, subjects.course as subjcourse "
+                              "FROM results INNER JOIN  subjects ON results.subject=subjects.name "
                               "WHERE  (" + ebselect + ") "
                               "AND (" + notcourses + ") "
                               "AND (" + notabreviations + ") "
@@ -166,19 +166,19 @@ class database:
             period        TEXT  NOT NULL,
             grade         INTEGER,
             FOREIGN KEY(uniquename) REFERENCES names(uniquename),
-            FOREIGN KEY(code) REFERENCES abreviations(code));''')
+            FOREIGN KEY(code) REFERENCES subjects(code));''')
         #unique (year, uniquename,subject,course, period,grade)
         print("Grades table created successfully")
         con.close()
 
-    def generate_abreviations_table(self, cur=None):
+    def generate_subjects_table(self, cur=None):
         """
         Generates the database for storing the information
         about subjects: Their names, and relations
         :return:
         """
         con = sqlite3.connect(self.db)
-        con.execute('''CREATE TABLE abreviations
+        con.execute('''CREATE TABLE subjects
             (id INTEGER PRIMARY KEY AUTOINCREMENT    NOT NULL,
             stage          TEXT   NOT NULL,
             code          TEXT   NOT NULL,           
@@ -189,7 +189,7 @@ class database:
             abv_eu        TEXT  NOT NULL,
             course        INT NOT NULL,
             dept           TEXT NOT NULL);''')
-        print("Abreviations table created successfully")
+        print("subjects table created successfully")
         con.close()
 
     def generate_all_tables(self):
@@ -197,12 +197,12 @@ class database:
         Generates all database tables:
         names
         yeardata
-        abreviations
+        sbujects
         grades
         """
         self.generate_names_table()
         self.generate_yeardata_table()
-        self.generate_abreviations_table()
+        self.generate_subjects_table()
         self.generate_grade_table()
 
     def insert_names(self, files):
@@ -369,8 +369,8 @@ class database:
         con = sqlite3.connect(self.db)
         cur = con.cursor()
         print("Opened database successfully")
-        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='abreviations'").fetchall()[0][0] == 0:
-            self.generate_abreviations_table(cur)
+        if cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='subjects'").fetchall()[0][0] == 0:
+            self.generate_subjects_table(cur)
         with open(file, 'r', encoding="UTF-8") as results:
                 reader = csv.reader(results, delimiter=",")
                 headers = next(reader, None)  # get first row with headers
@@ -387,7 +387,7 @@ class database:
                     subject_group_value = ''
                     if row[subject_group] != '':
                             subject_group_value = row[subject_group]
-                    cur.execute("INSERT INTO abreviations(stage,code,subject_group,name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    cur.execute("INSERT INTO subjects(stage,code,subject_group,name_eu,name_es, abv_eu, abv_es, course, dept) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (row[stage],row[code],subject_group_value,row[subjname_eu], row[subjname_es], row[abv_eu], row[abv_es], row[subjcourse], row[dept]))
         con.commit()
         con.close()
@@ -465,7 +465,7 @@ class database:
         """#FIXME some cache??
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        subject_id = cur.execute("select id from abreviations where name_es = :subject or name_eu = :subject", {"subject": subject}).fetchone()[0]
+        subject_id = cur.execute("select id from subjects where name_es = :subject or name_eu = :subject", {"subject": subject}).fetchone()[0]
         con.close()
         if subject_id:
             return subject_id
@@ -479,7 +479,7 @@ class database:
         """
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        subjects = cur.execute("select name_eu,code from abreviations").fetchall()
+        subjects = cur.execute("select name_eu,code from subjects").fetchall()
         d = {key: value for (key, value) in subjects}
         con.close()
         return d

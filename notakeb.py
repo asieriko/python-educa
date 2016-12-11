@@ -260,7 +260,7 @@ class notak:
         :param coursegroup: only needed to create the filename
         :return: None, it stores the plot in the filesystem
         '''
-        gtitle = coursegroup + self.periods[self.period - 1] + " (" + self.year + ") "
+        gtitle = coursegroup + ' - ' + self.periods[self.period - 1] + " (" + self.year + ") "
         diagram.plot(kind='bar', title=gtitle).legend(loc=4)
         plt.title(gtitle)
         if func.__name__ == 'mean':
@@ -354,6 +354,7 @@ class notak:
                 gtitle = course + '-' + lang
                 
                 self.generatePlot(diagram,func,gtitle)
+
 
     def generateCourseBilPlots(self, func):
         """
@@ -516,7 +517,82 @@ class notak:
                     doc.addParagraph("Número de suspensos por alumno y situación de promoción")
                     doc.addImage(pietitle,"resumen de promoción")
                     doc.addImageHeaderFooter()
-                    doc.save(ps+lang+".odt")
+                    doc.save(self.workdir+ps+lang+".odt")
+
+
+    def generateDeptPlots(self, func):
+        """
+        This funcition generates 3 plots for each course: One for AG languages, another for D and
+        the last one for all of them for current year and period
+        If the period is not the first, plots have a series with the previous period
+        All plots have a series with the average of the last "5" years
+        :param func: The function to use for aggregating grades, either np.mean or self.percent
+        :return:
+        """
+        depts = self.df.dept.unique()
+        for dept in depts:
+            doc = td.textdoc()
+            doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
+            doc.addTitle("Departamento: " + dept)
+            doc.addParagraph("Este documento contiene un resumen de las calificaciones del departamento.")
+            doc.addParagraph("Contiene 3 apartados con la media de las calificaciones de cada asignatura del departamento y con el porcentaje de alumnos aprobados de cada una de ellas, comparado con la media de los últimos 5 años. El primero de ellasde ambos modelos juntos, los dos siguientes con los de AG y D por separado.")
+            for lang in [None,'AG', 'D']:  # [df.lang.unique(),None]:
+                if lang:
+                    dflang = self.df[self.df['lang'] == lang]
+                else:
+                    dflang = self.df
+                    lang='All'
+                doc.addTitle2("Modelo:  " + lang )
+                deptdf = dflang[dflang.dept == dept].sort_values(by="code")
+                datatable = None
+                for sfunc in func:
+                    deptyearebspivot = pd.pivot_table(deptdf, index=["abv_"+self.langg+""], values=["grade"], columns=['year','period'],aggfunc=sfunc)
+                    #Remove subjects that are not in the current period/course
+                    deptyearebspivot =deptyearebspivot[deptyearebspivot[deptyearebspivot.columns[len(deptyearebspivot.columns)-1]].notnull()]
+                    selectperiods = deptyearebspivot.swaplevel(0, 2, axis=1)
+                    selectyears = deptyearebspivot.swaplevel(0, 1, axis=1)
+                    currenteb = selectperiods[self.periods[self.period - 1]]
+                    
+                    years = deptdf.year.unique()
+                    years = years[-6:] if len(years) > 6 else years
+                    
+                    currenttext =  "(" + dept + "-" + lang + ")" + self.cur[self.langg]
+                    prevtext = "(" + dept + "-" + lang + ")" + self.prev[self.langg]
+                    avg5text = "("+ dept + "-" + lang + ")" + self.avg5[self.langg]
+                    
+                    diagram = pd.DataFrame()
+                    diagram[currenttext] = currenteb[currenteb.keys()[-1]]
+                    if len(years) == 1:
+                        diagram[avg5text] = currenteb[years].mean(axis=1)
+                    else:
+                        diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
+                    if self.period != 1:
+                        previouseb = selectperiods[self.periods[self.period - 2]]
+                        diagram[prevtext] = previouseb[previouseb.keys()[-1]]
+                        diagram=diagram[[prevtext,currenttext,avg5text]]
+                        diagram = diagram.append(pd.DataFrame([(diagram[prevtext].mean(), diagram[currenttext].mean(), diagram[avg5text].mean())],
+                                        index=[self.avg[self.langg]], columns=[prevtext, currenttext, avg5text]))
+                    else:
+                        diagram=diagram[[currenttext,avg5text]]
+                        diagram = diagram.append(pd.DataFrame([(diagram[currenttext].mean(), diagram[avg5text].mean())], index=[self.avg[self.langg]],
+                                        columns=[currenttext, avg5text]))
+                    gtitle = dept + '-' + lang
+                    barplot = self.generatePlot(diagram,sfunc,gtitle)
+                    doc.addImage(self.workdir + "/" + barplot,"resumen de calificaciones"+lang)
+                    diagram = diagram.round(2)
+                    diagram.columns = sfunc.__name__ + diagram.columns
+                    if datatable is None:
+                        datatable = diagram
+                    else:
+                        datatable = pd.merge(datatable,diagram,left_index=True,right_index=True)
+                dfs = self.df[["subject","abv_"+self.langg,"code"]]
+                dfs.drop_duplicates(subset='code',keep='last',inplace=True)
+                dfs.drop("code",axis=1,inplace=True)
+                datatable = pd.merge(datatable,dfs,right_on="abv_"+self.langg,left_index=True)#FIXME: I'm trying to have the abreviations in the plot and text in the table. IF it works abv_es has to be considered
+                datatable.set_index('subject',drop=True,inplace=True)
+                datatable.drop("abv_"+self.langg,inplace=True,axis=1)
+                doc.addTable(datatable.reset_index().values,["Asignatura"]+list(datatable.columns))
+            doc.save(self.workdir+dept+".odt")
 
 
     def generateGroupPlots(self, group, func):
@@ -719,10 +795,10 @@ class notak:
         years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016']
         good = []
         for year in years:
-            eh = pd.pivot_table(self.df[(self.df['period']==period) & (self.df['year']==year)], index=["subject"], values=["grade"],margins=True,aggfunc=n.percent).fillna('')
-            eh.columns = ["positivepercentage"]
-            bad = eh[eh.positivepercentage<percentaje]
-            pergood = 100-len(bad)*100/len(eh)
+            passpercent = pd.pivot_table(self.df[(self.df['period']==period) & (self.df['year']==year)], index=["subject"], values=["grade"],margins=True,aggfunc=n.percent).fillna('')
+            passpercent.columns = ["positivepercentage"]
+            bad = passpercent[passpercent.positivepercentage<percentaje]
+            pergood = 100-len(bad)*100/len(passpercent)
             good.append(pergood)
         return list(zip(years,good))
 
@@ -734,17 +810,17 @@ class notak:
             framefilter = (self.df['period']==period) & (self.df['year']==year) & (self.df['cgroup']==group)
         else:
             framefilter = (self.df['period']==period) & (self.df['year']==year)
-        eh = pd.pivot_table(self.df[framefilter], index=["subject"], values=["grade"],margins=True,aggfunc=self.percent).fillna('') #FIXME: Something more global subject is in basque
-        eh.columns = ["positivepercentage"]
-        bad = eh[eh.positivepercentage<percentaje]
-        perbad = len(bad)*100/len(eh)
+        passpercent = pd.pivot_table(self.df[framefilter], index=["subject"], values=["grade"],margins=True,aggfunc=self.percent).fillna('') #FIXME: Something more global subject is in basque
+        passpercent.columns = ["positivepercentage"]
+        bad = passpercent[passpercent.positivepercentage<percentaje]
+        perbad = len(bad)*100/len(passpercent)
         if self.debug:
            print(str(group))#period," of ",year," Course")
            print("Subject with less than %" + str(percentaje) + " ap: %","{0:.2f}".format(perbad))
            pd.options.display.float_format = '{:,.2f}%'.format
            print(bad)
         #print("Group;" + str(group) +";"+ str(percentaje) + " ap: %;",str(100-perbad))
-        eh.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+".csv")
+        passpercent.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+".csv")
         bad.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+"BAD.csv")
 
 
@@ -775,13 +851,11 @@ class notak:
         print("</body></html>")
             
     # Pendienteak kurtsoan bertan agertzen dira, 2. batx badu 1. batx pendiente course=2. batx
-    def generateStatsStudent(self,mod=None, groups=None):
+    def generateStatsAllStudents(self,mod=None, groups=None):
         '''
         Generates a html file foreach group, which includes a table with each student marks (present and past periods)
         and also a graph with the same data plus a column with the average of the course
         '''
-        con = sqlite3.connect(self.db)
-        cur = con.cursor()
         ebals = self.periods[:self.period]
         legend = [e for e in ebals]
         legend.append("mailaren BB")
@@ -789,8 +863,6 @@ class notak:
         if not groups:
             courses = self.df[self.df.year == self.year].coursename.unique()#FIXME excludedCourses?
         else:
-            #g = generateOR("cgroup", groups)
-            #courses = [c[0] for c in cur.execute("SELECT DISTINCT course FROM results WHERE year=? AND period=? AND " + g, [year, ebals[-1]]).fetchall() if c[0].encode("utf8") not in self.excludedCourses]
             g1 = self.generateORpandas("self.df.cgroup", groups)
             filter = "(self.df.year == self.year) & (self.df.period == self.period ) & " + g1
             courses = self.df[eval(filter)].coursename.unique()
@@ -823,7 +895,7 @@ class notak:
                     if self.debug:
                         print("student: ",studentid," name:" + studentname)
                     htmlmenu = htmlmenu + '<li><a href=\"#' + "-".join(str(studentid).split()) + '\">' + studentname + '</a></li>'
-                    html = self.generateStatsStudent2(studentid,studentname,groupgrades)
+                    html = self.generateStatsStudent(studentid,studentname,groupgrades)
                     ghtml = ghtml + html
                 ghtml = '''
                 <!DOCTYPE html>
@@ -951,7 +1023,7 @@ class notak:
             self.generateGroupStatsPlots(group)
         return subjectsgrouppt,badsubjectsgroup,groupgrades,studentsnotpasses,pie,mean,percent
 
-    def generateStatsStudent2(self,student,fullname,groupgrades):
+    def generateStatsStudent(self,student,fullname,groupgrades):
         '''
         generates html with a table for the students with subjects and his marks side by side with all group marks
         studentgroupgrades is a DataFrame with those marks
@@ -982,19 +1054,19 @@ class notak:
         plt.axhline(5)
         plt.savefig(self.workdir + fname, format="png")
         plt.close()
-        html = ""
-        html = html + '''
+        html = '''
         <div class="student">
             <h1 style=\"clear: both;\" id='%s'></h1>
             <h1> %s  <a href=#top>(top)</a></h1>
             <div class="row" style=\"display: flex; align-items: center;\">
-            <div class="col-md-3 col-sm-6">'''%("-".join(str(student).split()),fullname)
-        html = html + studentgrades.to_html(index=False,classes="table table-striped",float_format=lambda x: '%10.2f' % x) + '''</div>
+            <div class="col-md-3 col-sm-6">
+            %s
+            </div>
         <div class="col-md-7 col-sm-6">
         <img class="img-responsive center-block"  style=\"float: left; margin: 0px 0px 15px 15px;vertical-align: middle;\" src=\"%s\">
         </div>
         </div>
-        </div>'''%(fname)
+        </div>'''%("-".join(str(student).split()),fullname,studentgrades.to_html(index=False,classes="table table-striped",float_format=lambda x: '%10.2f' % x),fname)
         return html
     
     def promcourseplots(self,period):
@@ -1079,7 +1151,7 @@ if __name__ == "__main__":
     print("generate All Stats Plots")
     n.generateAllStatsPlots()
     print("generate Stats Student")
-    n.generateStatsStudent()#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
+    n.generateStatsAllStudents()#,groups=("Bach.2A","Bach.2B","Batx.2H","Batx.2I","Batx.2J"))
 
 #import notakeb
 #import numpy as np
@@ -1097,4 +1169,4 @@ if __name__ == "__main__":
 #taldeak = n.df[n.df.year == "2015-2016"].cgroup.unique()
 #for t in taldeak:
     #n.generatePassPercent("Azken Ebaluazioa","2015-2016",t)
-#n.generateStatsStudent("2015-2016","1. Ebaluazioa")
+#n.generateStatsAllStudents("2015-2016","1. Ebaluazioa")

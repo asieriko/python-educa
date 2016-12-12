@@ -399,8 +399,7 @@ class database:
         if not year:
             sqlyears = "select distinct year from grades order by year"
             year = cur.execute(sqlyears).fetchall()[-1][0]
-            print(year)
-        cur.execute("DELETE from GRADES WHHERE year = ?",(year))
+        cur.execute("DELETE from GRADES WHERE year = ?",([year]))
         con.commit()
         con.close()
 

@@ -87,8 +87,9 @@ class notak:
         self.df.grade = self.df.grade.astype(int)
         if self.debug:
            print(self.df.head())
-        sqlsubjects = "SELECT * FROM abreviations"
+        sqlsubjects = "SELECT * FROM subjects"
         dfsubjects = pd.read_sql(sqlsubjects,con)
+        dfsubjects.sort_values('id',inplace=True)
         dfsubjects.drop_duplicates(subset='code',keep='last',inplace=True) #FIXME: Not sure if it gets the last \
         #    because it depends on the database index
         con.close()
@@ -327,6 +328,7 @@ class notak:
                 currenteb = selectperiods[self.periods[self.period - 1]]
                 
                 years = coursedf.year.unique()
+                years.sort()
                 years = years[-6:] if len(years) > 6 else years
                 
                 currenttext =  "(" + course + "-" + lang + ")" + self.cur[self.langg]
@@ -387,6 +389,7 @@ class notak:
                 currenteb = selectperiods[self.periods[self.period - 1]]
                 
                 years = bilcoursedf.year.unique()
+                years.sort()
                 years = years[-6:] if len(years) > 6 else years
                 
                 currenttext =  "(" + course + "-" + lang + "-Bil)" + self.cur[self.langg]
@@ -481,6 +484,8 @@ class notak:
                 courseyearebspivot = courseyearebspivot[courseyearebspivot[courseyearebspivot.columns[len(courseyearebspivot.columns)-1]].notnull()]
                 
                 for ps in dflang.primaryschool.unique():
+                    if ps == None:
+                        continue
                     schoolcoursedf = dflang[dflang.primaryschool == ps] 
                     schoolcourseyearebspivot = pd.pivot_table(schoolcoursedf, index=["abv_"+self.langg+""], values=["grade"],aggfunc=func)
                     #Remove subjects that are not in the current period/course
@@ -516,7 +521,7 @@ class notak:
                     doc.addTitle2("Datos de aprobados y promoción")
                     doc.addParagraph("Número de suspensos por alumno y situación de promoción")
                     doc.addImage(pietitle,"resumen de promoción")
-                    doc.addImageHeaderFooter()
+                    doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
                     doc.save(self.workdir+ps+lang+".odt")
 
 
@@ -531,6 +536,8 @@ class notak:
         """
         depts = self.df.dept.unique()
         for dept in depts:
+            if dept == None or dept == 'nan':
+                continue
             doc = td.textdoc()
             doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
             print(dept)
@@ -555,6 +562,7 @@ class notak:
                     currenteb = selectperiods[self.periods[self.period - 1]]
                     
                     years = deptdf.year.unique()
+                    years.sort()
                     years = years[-6:] if len(years) > 6 else years
                     
                     currenttext =  "(" + dept + "-" + lang + ")" + self.cur[self.langg]
@@ -586,11 +594,11 @@ class notak:
                         datatable = diagram
                     else:
                         datatable = pd.merge(datatable,diagram,left_index=True,right_index=True)
-                dfs = self.df[["subject","abv_"+self.langg,"code"]]
+                dfs = self.df[["name_"+self.langg,"abv_"+self.langg,"code"]]
                 dfs.drop_duplicates(subset='code',keep='last',inplace=True)
                 dfs.drop("code",axis=1,inplace=True)
                 datatable = pd.merge(datatable,dfs,right_on="abv_"+self.langg,left_index=True)#FIXME: I'm trying to have the abreviations in the plot and text in the table. IF it works abv_es has to be considered
-                datatable.set_index('subject',drop=True,inplace=True)
+                datatable.set_index("name_"+self.langg,drop=True,inplace=True)
                 datatable.drop("abv_"+self.langg,inplace=True,axis=1)
                 doc.addTable(datatable.reset_index().values,["Asignatura"]+list(datatable.columns))
             doc.save(self.workdir+dept+".odt")
@@ -1178,6 +1186,6 @@ if __name__ == "__main__":
     #print("generate All Stats Plots")
     #n.generateAllStatsPlots()
     #print("generate Stats Student")
-    n.generateStatsAllStudents(doc=True)
+    #n.generateStatsAllStudents(doc=True)
     n.generatePrymarySchoolPlots(np.mean)
     n.generateDeptPlots([np.mean,n.percent])

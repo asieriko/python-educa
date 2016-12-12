@@ -21,6 +21,10 @@ class textdoc:
     def __init__(self):
         self.textdoc = OpenDocumentText()
         
+        self.oneandhalflines = Style(name="oneandhalflines", parentstylename="Standard", family="paragraph")
+        self.oneandhalflines.addElement(ParagraphProperties(lineheight="1.5"))
+        self.textdoc.automaticstyles.addElement(self.oneandhalflines)
+        
         # Create a style for the paragraph with page-break
         self.withbreak = Style(name="WithBreak", parentstylename="Standard", family="paragraph")
         self.withbreak.addElement(ParagraphProperties(breakbefore="page"))
@@ -108,6 +112,7 @@ class textdoc:
         self.textdoc.text.addElement(title)
         
     def addParagraph(self,text):
+        #paragraph = P(stylename=self.oneandhalflines,text=text)
         paragraph = P(text=text)
         self.textdoc.text.addElement(paragraph) 
         
@@ -199,12 +204,12 @@ class textdoc:
                 
                 mp.addElement(h)
             if footer:
-                f = Footer()
+                fo = Footer()
                 pn = PageNumber()
                 fp = P(text=footer,stylename=self.footercenterstyle)#FIXME: Pagen number shoulb be better
                 fp.addElement(pn)
-                f.addElement(fp)
-                mp.addElement(f)
+                fo.addElement(fp)
+                mp.addElement(fo)
         
         
     def save(self,filename):

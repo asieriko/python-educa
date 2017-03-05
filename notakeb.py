@@ -522,7 +522,7 @@ class notak:
                     doc.addParagraph("Número de suspensos por alumno y situación de promoción")
                     doc.addImage(pietitle,"resumen de promoción")
                     doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
-                    doc.save(self.workdir+ps+lang+".odt")
+                    doc.save(self.workdir + "primaryschool/" + +ps+lang+".odt")  #FIXME: os.path.join
 
 
     def generateDeptPlots(self, func):
@@ -601,7 +601,7 @@ class notak:
                 datatable.set_index("name_"+self.langg,drop=True,inplace=True)
                 datatable.drop("abv_"+self.langg,inplace=True,axis=1)
                 doc.addTable(datatable.reset_index().values,["Asignatura"]+list(datatable.columns))
-            doc.save(self.workdir+dept+".odt")
+            doc.save(self.workdir+"depts/"+dept+".odt") #FIXME: os.path.join
 
 
     def generateGroupPlots(self, group, func):
@@ -615,10 +615,10 @@ class notak:
            print(self.year, group)
         #Get course/level infor
         lang = self.df[(self.df.year == self.year) & (self.df.cgroup == group)].lang.unique()[0]
-        course = self.df[(self.df.year == self.year) & (self.df.cgroup == group)].coursename.unique()[0]
+        course = self.df[(self.df.year == self.year) & (self.df.cgroup == group)].course.unique()[0]
         if self.debug:
            print("Eredua: ",lang)
-        levelpivot = self.df[(self.df['lang'] == lang) & (self.df['year'] == self.year) & (self.df['coursename'] == course)]
+        levelpivot = self.df[(self.df['lang'] == lang) & (self.df['year'] == self.year) & (self.df['course'] == course)]
         levelpivot = pd.pivot_table(levelpivot, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"], aggfunc=func)
         levelperiods = levelpivot.swaplevel(0, 2, axis=1)
         levelyears = levelpivot.swaplevel(0, 1, axis=1)
@@ -768,15 +768,15 @@ class notak:
                 dflang = self.df[self.df['lang'] == lang]
             else:
                 dflang = self.df
-            for course in dflang[dflang.year == self.year].coursename.unique():
+            for course in dflang[dflang.year == self.year].course.unique():
                 if not lang: lang = "All"
                 if self.debug:
                     print(course,lang)
-                pt = pd.pivot_table(dflang[(dflang.coursename == course) & (dflang.year == self.year) & (
+                pt = pd.pivot_table(dflang[(dflang.course == course) & (dflang.year == self.year) & (
                 dflang.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                                   aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
-                self.generatePiePlot(missed,course)
+                self.generatePiePlot(missed,course+"-"+lang)
                 #FIXME:Test and delete
                 #title = self.studpasstitle[self.langg]
                 #title2 = self.promttitle[self.langg]
@@ -801,10 +801,10 @@ class notak:
         return allg
 
     def generateYearsAllGoodSubjects(self,period,percentaje,years=None):
-        years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016']
+        years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016','2016-2017']
         good = []
         for year in years:
-            passpercent = pd.pivot_table(self.df[(self.df['period']==period) & (self.df['year']==year)], index=["subject"], values=["grade"],margins=True,aggfunc=n.percent).fillna('')
+            passpercent = pd.pivot_table(self.df[(self.df['period']==period) & (self.df['year']==year)], index=["subject"], values=["grade"],margins=True,aggfunc=self.percent).fillna('')
             passpercent.columns = ["positivepercentage"]
             bad = passpercent[passpercent.positivepercentage<percentaje]
             pergood = 100-len(bad)*100/len(passpercent)
@@ -829,6 +829,7 @@ class notak:
            pd.options.display.float_format = '{:,.2f}%'.format
            print(bad)
         #print("Group;" + str(group) +";"+ str(percentaje) + " ap: %;",str(100-perbad))
+        print(group,";",perbad)
         passpercent.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+".csv")
         bad.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+"BAD.csv")
 
@@ -845,7 +846,7 @@ class notak:
         return g
 
     def generateStatsSubjectsPandas(self):
-        pts = pd.pivot_table(self.df[self.df.year == self.year], rows=["coursename","subject"],values=["grade"],cols=["lang","period"],margins=True,aggfunc=np.mean).fillna('')
+        pts = pd.pivot_table(self.df[self.df.year == self.year], rows=["course","subject"],values=["grade"],cols=["lang","period"],margins=True,aggfunc=np.mean).fillna('')
             #pts.ix['1. Batxilergoa LOE'].ix["Latina I"][0] AG 1. eb (bakarrik 1 eb)
             # n.subjectsavg["2015-2016"].ix['2. Batxilergoa LOE'].ix["Latina II"].grade.AG[0] 1. eb
         self.subjectsavg[year] = pts
@@ -870,16 +871,16 @@ class notak:
         legend.append("mailaren BB")
         groupsp = groups
         if not groups:
-            courses = self.df[self.df.year == self.year].coursename.unique()#FIXME excludedCourses?
+            courses = self.df[self.df.year == self.year].course.unique()#FIXME excludedCourses?
         else:
             g1 = self.generateORpandas("self.df.cgroup", groups)
             filter = "(self.df.year == self.year) & (self.df.period == self.period ) & " + g1
-            courses = self.df[eval(filter)].coursename.unique()
+            courses = self.df[eval(filter)].course.unique()
         for course in sorted(courses):
             if self.debug:
                  print("course: ",course)
             self.generateStatsCourse(self.year,ebals,mod, course)
-            groups = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)].cgroup.unique()
+            groups = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.course == course)].cgroup.unique()
             if groupsp:
                 groups = [g for g in groups if g in groupsp]
             for group in groups:
@@ -896,7 +897,7 @@ class notak:
                 cols = cols[-1:] + cols[1:-1]
                 studentsnotpasses = studentsnotpasses[cols]
                 
-                students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.coursename == course) & (self.df.cgroup == group)].uniquename.unique()
+                students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.course == course) & (self.df.cgroup == group)].uniquename.unique()
                 htmlmenu = ""
                 ghtml = ""
                 if doc:
@@ -984,21 +985,21 @@ class notak:
                 f.write(ghtml) #  f.write(ghtml.encode("utf8"))
                 f.close()
                 if doc:
-                    doc.save(self.workdir + group + ".odt")
+                    doc.save(self.workdir + "groups/" + group + ".odt")  #FIXME: os.path.join
 
     def generateStatsCourse(self, year, ebals, mod=None, course=None):
         if self.debug:
            print(course)#FIXME: subject find better, it is in basque
-        coursegrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
-        courseaverage = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)],index=["coursename"],values=["grade"],margins=True,aggfunc=np.mean).fillna(0)
-        subjectscoursept = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')
+        coursegrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.course == course)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+        courseaverage = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.course == course)],index=["course"],values=["grade"],margins=True,aggfunc=np.mean).fillna(0)
+        subjectscoursept = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.course == course)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')
         badsubjectscourse = subjectscoursept[subjectscoursept.grade<70]
         badsubjectscourse.unstack()
         badsubjectscourse.reset_index(level=0,inplace=True)
         #Another way to calculate each course's subjects average
         #The average of all course is different with pandas or sql, does pandas calculate the avg of the avgs of each subject?
         subjectsavg = {}
-        subjects = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.coursename == course)].subject.unique()
+        subjects = self.df[(self.df.year == self.year) & (self.df.period == ebals[-1]) & (self.df.course == course)].subject.unique()
         for subject in subjects:
             subjectsavg[subject] = str(coursegrades.ix[subject].grade)
         con = sqlite3.connect(self.db)
@@ -1115,9 +1116,9 @@ class notak:
         1A   1B   1C
         '''
         l=("0","1-2","3-4",">=5")                    
-        courses = self.df[self.df.year == self.year].coursename.unique()#FIXME excludedCourses?
+        courses = self.df[self.df.year == self.year].course.unique()#FIXME excludedCourses?
         for course in courses:
-            groups = self.df[(self.df.year == self.year) & (self.df.coursename == course)].cgroup.unique()
+            groups = self.df[(self.df.year == self.year) & (self.df.course == course)].cgroup.unique()
             groupsd={}
             groupsc=[]
             for group in groups:
@@ -1136,6 +1137,10 @@ class notak:
                 t=sum(a)
                 a = [x *100/ t for x in a]
                 groupslist.append(a)
+                notpassed = 0
+                for key, value in missed.items():
+                    notpassed += key*value
+                print(group,";",t,";",p[0],";",p[2],";",notpassed,";",notpassed/t)
             df=pd.DataFrame(groupslist)
             df.columns=l
             df=df.transpose()
@@ -1189,3 +1194,11 @@ if __name__ == "__main__":
     #n.generateStatsAllStudents(doc=True)
     n.generatePrymarySchoolPlots(np.mean)
     n.generateDeptPlots([np.mean,n.percent])
+    
+
+##Create report for schools. Add in selector lang (D-AG) and then compute for all and each school...    
+#import pandas as pd
+#pd.pivot_table(n.df[(n.df.course == "1 ESO") & (n.df.year == n.year) & (n.df.period == n.periods[0])], index=["uniquename","primaryschool","lang"], values=["grade"],columns=["subject"]).fillna('')
+#s=pd.pivot_table(n.df[(n.df.course == "1 ESO") & (n.df.year == "2012-2013") & (n.df.period == n.periods[5])], index=["uniquename","primaryschool","lang"], values=["grade"],columns=["subject"]).fillna('')    
+##more data:
+#select names.fullname,yeardata.uniquename,yeardata.lang,yeardata.repeating from yeardata,names where year="2015-2016" and  yeardata.course="1. DBH LOMCE" and names.primaryschool="CPEIP Pam. Mendillorri" and names.uniquename=yeardata.uniquename order by names.uniquename

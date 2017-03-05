@@ -75,13 +75,13 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="es"
-
-path = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/3ebaluaketa15-16/"
-name2 = " (2015-2016) Azken Ebaluazioa-mean-"+lang+".png"
-name1 = " (2015-2016) Azken Ebaluazioa-percent-"+lang+".png"
-name = "-Azken Ebaluazioa-"+lang+".png"
-
+lang="eu"
+year="2016-2017"
+period="1. Ebaluazioa"
+path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/1ebaluaketa16-17/"
+pie = "-" + period + "-" + lang + ".png"
+mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
+percent = ' - ' + period + " (" + year + ") " + "-percent-" + lang + ".png"
 
 #pl = PageLayout(name="pagelayout")
 #textdoc.automaticstyles.addElement(pl)
@@ -106,11 +106,11 @@ def groupPage(group,lang):
   textdoc.text.addElement(blankline)
   
   table = Table()
-  table.addElement(TableColumn(numbercolumnsrepeated=4))
+  table.addElement(TableColumn(numbercolumnsrepeated=2))
   if lang=="eu":
-     headers=["Atala","1. Ebaluazioa","2. Ebaluazioa","Azken Ebaluazioa"]
+     headers=["Atala","1. Ebaluazioa"]#,"2. Ebaluazioa","Azken Ebaluazioa"]
   else:
-     headers=["Apartado","1ª Evaluación","2ª Evaluación","Evaluación Final"]
+     headers=["Apartado","1ª Evaluación"]#,"2ª Evaluación","Evaluación Final"]
   tr = TableRow()
   table.addElement(tr)
   for val in headers:
@@ -149,7 +149,7 @@ def groupPage(group,lang):
   textList = List(stylename="L1")
   
   
-  file = path+"ehunekoak-Azken Ebaluazioa-2015-2016-"+group+".csv"
+  file = path+"ehunekoak-1. Ebaluazioa-2016-2017-"+group+".csv"
   with open(file, 'r', encoding="UTF-8") as results:
      reader = csv.reader(results)
      headers = next(reader, None)  # get first row with headers
@@ -167,12 +167,12 @@ def groupPage(group,lang):
   breakpage = P(stylename=withbreak,text="")
   textdoc.text.addElement(breakpage)
   
-  for n in [name,name1]:#,name2]:
+  for diagramtype in [pie,percent]:#,name2]:
     p = P()
     textdoc.text.addElement(p)
-    img_path = path+group+n
+    img_path = path + group + diagramtype
     href = textdoc.addPicture(img_path)
-    f = Frame(name=group+n, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
+    f = Frame(name=group+diagramtype, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
     p.addElement(f)
     img = Image(href=href, type="simple", show="embed", actuate="onLoad")
     f.addElement(img)
@@ -184,43 +184,39 @@ def coursePage(coursename,data,lang):
   blankline = P(text="")
   textdoc.text.addElement(blankline)    
   
-  prom="-All-Azken Ebaluazioa-"+lang+".png"
-  percent="-All (2015-2016) Azken Ebaluazioa-percent-"+lang+".png"
-  for n in [prom,percent]:
+  for diagramtype in [pie,percent]:
     p = P()
     textdoc.text.addElement(p)
-    img_path = path+coursename+n
+    img_path = path + coursename + "-All" + diagramtype
     href = textdoc.addPicture(img_path)
-    f = Frame(name=coursename+n, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
+    f = Frame(name=coursename+diagramtype, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
     p.addElement(f)
     img = Image(href=href, type="simple", show="embed", actuate="onLoad")
     f.addElement(img)
 
-  for l in ['AG','D']:#data.keys():
-     coursetitle = H(stylename=h2style,text=coursename+"-"+l,outlinelevel=2)
+  for courselang in ['AG','D']:#data.keys():
+     coursetitle = H(stylename=h2style,text=coursename+"-"+courselang,outlinelevel=2)
      textdoc.text.addElement(coursetitle)
      blankline = P(text="")
      textdoc.text.addElement(blankline)   
      
-     prom="-Azken Ebaluazioa-"+lang+".png"
-     percent=" (2015-2016) Azken Ebaluazioa-percent-"+lang+".png"
-     for n in [prom,percent]:
+     for diagramtype in [pie,percent]:
        p = P()
        textdoc.text.addElement(p)
-       img_path = path+coursename+"-"+l+n
+       img_path = path + coursename + "-" + courselang + diagramtype
        href = textdoc.addPicture(img_path)
-       f = Frame(name=coursename+n, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
+       f = Frame(name=coursename+diagramtype+courselang, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
        p.addElement(f)
        img = Image(href=href, type="simple", show="embed", actuate="onLoad")
        f.addElement(img)
      
-     for g in data[l]:
-       groupPage(g,lang)
+     for group in data[courselang]:
+       groupPage(group,lang)
 
 def ikasgaiak():
     ikasgai = {}
     with open("ikasgaiakitzulita.csv", 'r', encoding="UTF-8") as results:
-     reader = csv.reader(results)
+     reader = csv.reader(results, delimiter=";")
      for row in reader:
        ikasgai[row[0]] = row[1]
     return ikasgai
@@ -228,56 +224,50 @@ def ikasgaiak():
   
 def tutors():
   df = pd.read_csv("txostena_tutorea-dena.csv",sep=";")
-  taldeak = df.Izena.unique()
-  zutabeak = ['harreman1', 'harreman2', 'KonfHar', 'material','garbitasun', 'KonfGar', 'Promozionatzen', 'suspasko', 'KonfProm','Suspikasgai', 'KonfIkasgai', 'Suspikasle']
+  taldeak = df.Taldea.unique()
+  zutabeak = ['harreman1', 'harreman2', 'KonfHar', 'material','garbitasun', 'KonfGar', 'Promozionatzen', 'suspasko', 'KonfProm','Suspikasgai', 'KonfIkasgai', 'Suspikasle','Bizikidetza']
   tdata = {}
   for t in taldeak:
-    dfn = df[df.Izena==t]
+    dfn = df[df.Taldea==t]
     l=[]
-    for column in dfn[4:]:
+    for column in dfn:
       a=dfn[column].tolist()
       a.insert(0,column)
       l.append(a)
-    tdata[t] = l[2:]
+    tdata[t] = l[1:]
   return tdata
 
 
 ikasgai=ikasgaiak()
 td=tutors()  
 
-#td["3A"]
+#print(td["3º A"])
 
-coursegroups = OrderedDict({ '1. DBH': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1. H', '1. I',  '1. J']}, 
-                 '2. DBH': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2. H', '2. I',  '2. J','2. K']},
-                 '3. DBH': {'AG':['3A','3B','3C'], 'D':['3H','3I','3J','3K', '3L' ]},
-                 '4. DBH': {'AG':['4A','4B','4C','4D', '4E'], 'D':['4H', '4I',  '4J','4K','4L']},
-                 '3º PMAR': {'AG':['3P'], 'D':['3Q']},
-                 '4º Div. Cur.': {'AG':['4P'], 'D':['4Q']},
-                 '1. Batxilergoa LOE': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
-                 '2. Batxilergoa LOE': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
+                 '2º PMAR': {'AG':['2º P'],'D':['2º P']},           
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},
+                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J','3.K']},
+                 '4 ESO': {'AG':['4º A','4º B','4º C','4º D'], 'D':['4.H', '4.I',  '4.J','4.K','4.L']},
+                 '3º PMAR': {'AG':['3º D'], 'D':['3.L']},
+                 '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
+                 '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
                  })
 
-courses = ['1. DBH','2. DBH','3. DBH','4. DBH','4º Div. Cur.','1. Batxilergoa LOE','2. Batxilergoa LOE']
-groups = ['1º A','1º B', '1º C','1º D', '1. H', '1. I',  '1. J',   
-       '2º A', '2º B',  '2º C', '2º D','2. H','2. I','2. J','2. K',
-       '3A','3B','3C','3H','3I','3J','3K', '3L', 
-       '4A','4B','4C','4D', '4E','4H', '4I',  '4J','4K','4L',
-       '4P', '4Q'
-       'Bach.1A','Bach.1B', 'Batx.1H', 'Batx.1I', 'Batx.1J',
-       'Bach.2A','Bach.2B','Batx.2H', 'Batx.2I',  'Batx.2J',]
+courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
 
 for k in courses:
   coursePage(k,coursegroups[k],lang)
   
   
-textdoc.save("report.odt")  
+textdoc.save("report-"+lang+".odt")  
 
-coursegroups = { '1. DBH': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1. H', '1. I',  '1. J']}, 
-                 '2. DBH': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2. H', '2. I',  '2. J','2. K']},
-                 '3. DBH': {'AG':['3A','3B','3C'], 'D':['3H','3I','3J','3K', '3L' ]},
-                 '4. DBH': {'AG':['4A','4B','4C','4D', '4E'], 'D':['4H', '4I',  '4J','4K','4L']},
-                 '4º Div. Cur.': {'AG':['4P'], 'D':['4Q']},
-                 '1. Batxilergoa LOE': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
-                 '2. Batxilergoa LOE': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
-                 }
-  
+#coursegroups = OrderedDict({ '1. DBH LOMCE': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
+                 #'2. DBH LOMCE': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},
+                 #'3. DBH LOMCE': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J','3.K']},
+                 #'4. DBH LOMCE': {'AG':['4º A','4º B','4º C','4º D'], 'D':['4.H', '4.I',  '4.J','4.K','4.L']},
+                 #'3º PMAR': {'AG':['3º D'], 'D':['3.L']},
+                 #'1. Batxilergoa LOE': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
+                 #'2. Batxilergoa LOE': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
+                 #})
+
+#courses = ['1. DBH LOMCE','2. DBH LOMCE','3. DBH LOMCE','4. DBH LOMCE','1. Batxilergoa LOE','2. Batxilergoa LOE']

@@ -522,7 +522,8 @@ class notak:
                     doc.addParagraph("Número de suspensos por alumno y situación de promoción")
                     doc.addImage(pietitle,"resumen de promoción")
                     doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
-                    doc.save(self.workdir + "primaryschool/" + +ps+lang+".odt")  #FIXME: os.path.join
+                    self.createDir(self.workdir + "/primaryschool/")
+                    doc.save(self.workdir + "/primaryschool/" +ps+lang+".odt")  #FIXME: os.path.join
 
 
     def generateDeptPlots(self, func):
@@ -601,7 +602,8 @@ class notak:
                 datatable.set_index("name_"+self.langg,drop=True,inplace=True)
                 datatable.drop("abv_"+self.langg,inplace=True,axis=1)
                 doc.addTable(datatable.reset_index().values,["Asignatura"]+list(datatable.columns))
-            doc.save(self.workdir+"depts/"+dept+".odt") #FIXME: os.path.join
+            self.createDir(self.workdir+"/depts")
+            doc.save(self.workdir+"/depts/"+dept+".odt") #FIXME: os.path.join
 
 
     def generateGroupPlots(self, group, func):
@@ -830,6 +832,17 @@ class notak:
            print(bad)
         #print("Group;" + str(group) +";"+ str(percentaje) + " ap: %;",str(100-perbad))
         print(group,";",perbad)
+        import os.path
+        fname = self.workdir+"/groupbadsubjs.csv"
+        if not os.path.isfile(fname):
+            with open(fname, 'w') as csvfile:
+                    fieldnames = ['group', 'badsubjs']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+        with open(fname, 'a') as csvfile:
+                    fieldnames = ['group', 'badsubjs']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writerow({'group':group, 'badsubjs':perbad})
         passpercent.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+".csv")
         bad.to_csv(self.workdir+"/ehunekoak-"+period+"-"+year+"-"+str(group)+"BAD.csv")
 
@@ -903,24 +916,24 @@ class notak:
                 if doc:
                     doc = td.textdoc()
                     doc.addTitle("Resumen del grupo: " +group)
-                    doc.addTitle2("Taldeko emaitzak")
-                    doc.addTitle3("Promozioa")
+                    doc.addTitle2("Taldeko emaitzak/Resultados del grupo",False)
+                    doc.addTitle3("Promozioa/Promoción")
                     doc.addImage(self.workdir+pie,group+" promotion")
-                    doc.addTitle3("Ikasleen suspentso kopurua eta notaren Batazbestekoa")
+                    doc.addTitle3("Ikasleen suspentso kopurua eta notaren Batazbestekoa / Número de suspensos y nota media de los alumnos")
                     snp = studentsnotpasses.set_index("fullname",drop=True)
                     doc.addTable(snp.reset_index().values,["Student"]+list(studentsnotpasses.columns[1:]))
-                    doc.addTitle3("Batazbestekoa")
+                    doc.addTitle3("Batazbestekoa/Promedio")
                     doc.addImage(self.workdir+mean,group+" average grades")
-                    doc.addTitle3("Gaindituen ehunekoak")
+                    doc.addTitle3("Gaindituen ehunekoak/Porcentajes de aprobados")
                     doc.addImage(self.workdir+percent,group+" subjects pass percent")
-                    doc.addTitle3("ehuneko 70 baino gainditu gutxiago duten ikasgaiak")
+                    doc.addTitle3("ehuneko 70 baino gainditu gutxiago duten ikasgaiak/Asignaturas con menos del 70 por ciento de aprobados")
                     if not badsubjectsgroup.empty:
                         bsg = badsubjectsgroup.set_index("subject",drop=True)
                         doc.addTable(bsg.reset_index().values,["Subject"]+list(badsubjectsgroup.columns[1:]))
-                    doc.addTitle2("Ikasleen emaitzak")
+                    doc.addTitle2("Ikasleen emaitzak/Resultados de los alumnos",True)
                 else:
                     doc = False
-                for studentid in sorted(students):
+                for studentid in sorted(students): #FIXME: This sorts by uniquename, better fullname
                     studentname = str(sdf[sdf.uniquename==studentid].fullname.item())
                     if self.debug:
                         print("student: ",studentid," name:" + studentname)
@@ -985,7 +998,8 @@ class notak:
                 f.write(ghtml) #  f.write(ghtml.encode("utf8"))
                 f.close()
                 if doc:
-                    doc.save(self.workdir + "groups/" + group + ".odt")  #FIXME: os.path.join
+                    self.createDir(self.workdir + "/groups")
+                    doc.save(self.workdir + "/groups/" + group + ".odt")  #FIXME: os.path.join
 
     def generateStatsCourse(self, year, ebals, mod=None, course=None):
         if self.debug:
@@ -1086,7 +1100,7 @@ class notak:
         plt.savefig(self.workdir + fname, format="png")
         plt.close()
         if doc:
-            doc.addTitle3(fullname)
+            doc.addTitle3(fullname,True)
             studentgradesdoc = studentgrades.set_index("subject",drop=True)
             doc.addTable(studentgradesdoc.reset_index().values,["Subject"]+list(studentgradesdoc.columns))
             doc.addImage(self.workdir+fname,fullname+" grades")
@@ -1117,10 +1131,14 @@ class notak:
         '''
         l=("0","1-2","3-4",">=5")                    
         courses = self.df[self.df.year == self.year].course.unique()#FIXME excludedCourses?
+        with open(self.workdir+"/groupstats.csv", 'a') as csvfile:
+                    fieldnames = ['group', 'total',"promoting","risk34","Danger5","notpassedtot","suspavg"]
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
         for course in courses:
             groups = self.df[(self.df.year == self.year) & (self.df.course == course)].cgroup.unique()
             groupsd={}
-            groupsc=[]
+            groupsc=[] #FIXME: Change group name to adapt to askabi's naming
             for group in groups:
                 group1 = group.replace(". ", "")
                 group1 = group1.replace("º ", "")
@@ -1141,6 +1159,11 @@ class notak:
                 for key, value in missed.items():
                     notpassed += key*value
                 print(group,";",t,";",p[0],";",p[2],";",notpassed,";",notpassed/t)
+                with open(self.workdir+"/groupstats.csv", 'a') as csvfile:
+                    fieldnames = ['group', 'total',"promoting","risk34","Danger5","notpassedtot","suspavg"]
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writerow({'group':group, 'total':t,"promoting":p[0],"risk34":p[1],"Danger5":p[2],"notpassedtot":notpassed,"suspavg":notpassed/t})
+
             df=pd.DataFrame(groupslist)
             df.columns=l
             df=df.transpose()
@@ -1152,6 +1175,69 @@ class notak:
             plt.legend( loc=8, ncol=4, mode="expand", borderaxespad=0.)
             plt.savefig(self.workdir+"/"+course + '-allgroupsprom.png')
             plt.close()
+            
+    def mergegroupstatsaskabi(self,askfile=None):
+        
+        #FIXME: In the report i use promoting as percentaje, here it is as absolute.
+        #Either change here calculating the percentaje or change the csv genration
+        #and konfprom function
+        
+        def konf5(row,cols):
+            if row[cols[0]]+row[cols[0]] >= 10:
+                return "Konforme"
+            else:
+                return "EzKonforme"
+        
+        def konfprom(row):
+            if (row["promoting"]/row["total"]>=0.6) & (row["Danger5"]/row["total"]<0.2):
+                return "Konforme"
+            else:
+                return "EzKonforme"
+        
+        def konfikas(row):
+            if row[1]>=60:
+                return "Konforme"
+            else:
+                return "EzKonforme"
+            
+        def topercent(row,col):
+            return row[col]*100/row['total']
+        
+        gst = pd.read_csv(self.workdir+"/groupstats.csv")
+        gst.replace({'\.{1}': '','º':'',' ':''}, regex=True,inplace=True)
+        gst.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
+        gst["KonfProm"] = gst.apply (lambda row: konfprom(row),axis=1)
+        
+        gbs = pd.read_csv(self.workdir+"/groupbadsubjs.csv")
+        gbs.replace({'\.{1}': '','º':'',' ':''}, regex=True,inplace=True)
+        gbs.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
+        gbs["KonfIkasgai"] = gbs.apply (lambda row: konfikas(row),axis=1)
+        
+        if askfile:
+            ad = pd.read_csv(askfile)
+        else:
+            ad = pd.read_csv(self.workdir+"/tutore.csv",encoding="ISO-8859-15")
+        columns_drop = ['urtea','data','zenbat?','giroa','analisia','koordina_zerbitzu', 'balorazioa','oso_ongi', 'hobekutza']
+        ad.drop(columns_drop, axis=1, inplace=True)
+        ad.drop('docent', axis=1, inplace=True) #FIXME: Etorkizuenean gorde beharko zen
+        ad.drop('tut_erregistroa', axis=1, inplace=True) #FIXME: Etorkizuenean gorde beharko zen
+        ad["KonfHar"] = ad.apply (lambda row: konf5(row,["harreman_ik","harreman_ik_irak"]),axis=1)
+        ad["KonfGar"] = ad.apply (lambda row: konf5(row,["garbitasuna","materiala"]),axis=1)
+        
+        allg =  pd.merge(gst,gbs,right_on="group",left_on="group")
+        alld = pd.merge(allg,ad,how="left",right_on="taldea",left_on="group")
+        
+        
+        #['harreman1', 'harreman2', 'KonfHar', 'material','garbitasun', 'KonfGar', 'Promozionatzen', 'suspasko', 'KonfProm','Suspikasgai', 'KonfIkasgai', 'Suspikasle','Bizikidetza']
+        zutabeak = ['group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
+        alld = alld.reindex(columns=zutabeak)
+        alld.sort_values('group',inplace=True)
+        alld["Danger5"] = alld.apply (lambda row: topercent(row,'Danger5'),axis=1)
+        alld["promoting"] = alld.apply (lambda row: topercent(row,'promoting'),axis=1)
+        alld.fillna('',inplace=True)
+        alld.to_csv(self.workdir+"/reportgruoupdata.csv")
+                
+        return alld
     
 if __name__ == "__main__":
     #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"

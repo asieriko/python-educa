@@ -219,9 +219,28 @@ class GetEDUCAdata():
         self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+str(years[-1][0])+".csv")
         self.logout()
         
-    def getalldata(self,data):
+    def getnamesyeardata(self,year=None):
+        self.login()
+        if not year:
+            years = self.getyears()
+        else:
+            years = [year]
+        courses = self.getcourses(years[-1])
+        self.selectcourses(courses)
+        subjects = self.getsubjects()
+        self.selectsubjects(subjects)
+        self.getpossibledata()
+        self.selectdata(["personal","year"])
+        self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/names-year"+str(years[-1][0])+".csv")
+        self.logout()
+        
+    def getalldata(self,data,syear=None):
         self.login()
         years = self.getyears()
+        if syear:
+            for y in years:
+                if y[0] == syear:
+                    years = [y]
         for year in years:
             courses = self.getcourses(year)
             self.selectcourses(courses)
@@ -239,11 +258,11 @@ if __name__ == "__main__":
     passwd = getpass.getpass()
     ged = GetEDUCAdata(user,passwd,verbose=False)
     print(ged.params)
-    ged.getallcurrentgrades()
-    #ged.getalldata("personal")
+    #ged.getallcurrentgrades()
+    ged.getalldata("personal","2016-2017")
     #print(ged.params)
     #ged.resetparams()
-    #ged.getalldata("year")
+    ged.getalldata("year","2016-2017")
     #print(ged.params)
     #ged.resetparams()
     ##ged.getalldata("grades")

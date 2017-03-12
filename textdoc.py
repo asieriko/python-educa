@@ -63,13 +63,21 @@ class textdoc:
 
         self.h2style = Style(name="Heading 2", family="paragraph",parentstylename="Heading 2")
         self.h2style.addElement(TextProperties(attributes={'fontsize':"12pt",'fontweight':"bold",'color':"#000099" }))
-        self.h2style.addElement(ParagraphProperties(breakbefore="page",marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
+        self.h2style.addElement(ParagraphProperties(marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
         self.textdoc.automaticstyles.addElement(self.h2style)
+        
+        self.h2bstyle = Style(name="Heading 2", family="paragraph",parentstylename="Heading 2")
+        self.h2bstyle.addElement(ParagraphProperties(breakbefore="page",marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
+        self.textdoc.automaticstyles.addElement(self.h2bstyle)
 
         self.h3style = Style(name="Heading 3", family="paragraph",parentstylename="Heading 3")
         self.h3style.addElement(TextProperties(attributes={'fontsize':"12pt",'fontweight':"bold",'color':"#000099" }))
-        self.h3style.addElement(ParagraphProperties(breakbefore="page",marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
+        self.h3style.addElement(ParagraphProperties(marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
         self.textdoc.automaticstyles.addElement(self.h3style)
+        self.h3bstyle = Style(name="Heading 3", family="paragraph",parentstylename="Heading 3")
+        self.h3bstyle.addElement(TextProperties(attributes={'fontsize':"12pt",'fontweight':"bold",'color':"#000099" }))
+        self.h3bstyle.addElement(ParagraphProperties(breakbefore="page",marginleft="0cm",marginright="0cm",margintop="0.2cm",marginbottom="0.2cm",lineheight="150%",textindent="1.2cm",autotextindent="false"))
+        self.textdoc.automaticstyles.addElement(self.h3bstyle)
 
         self.TAB_style = Style(name="Table", family="table-cell", parentstylename="Standard")
         self.TAB_style.addElement(TableCellProperties(border="0.05pt solid #000000"))
@@ -103,12 +111,18 @@ class textdoc:
         title = H(stylename=self.h1style,text=text,outlinelevel=1)
         self.textdoc.text.addElement(title)
     
-    def addTitle2(self,text):
-        title = H(stylename=self.h2style,text=text,outlinelevel=2)
+    def addTitle2(self,text,newpage=False):
+        if newpage:
+            title = H(stylename=self.h2bstyle,text=text,outlinelevel=2)
+        else:
+            title = H(stylename=self.h2style,text=text,outlinelevel=2)
         self.textdoc.text.addElement(title)
         
-    def addTitle3(self,text):
-        title = H(stylename=self.h3style,text=text,outlinelevel=3)
+    def addTitle3(self,text,newpage=False):
+        if newpage:
+            title = H(stylename=self.h3bstyle,text=text,outlinelevel=3)
+        else:
+            title = H(stylename=self.h3style,text=text,outlinelevel=3)
         self.textdoc.text.addElement(title)
         
     def addParagraph(self,text):

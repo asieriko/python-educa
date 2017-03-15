@@ -75,13 +75,32 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="eu"
+lang="es"
 year="2016-2017"
-period="1. Ebaluazioa"
-path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/1ebaluaketa16-17/"
+period="2. Ebaluazioa"
+path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
 percent = ' - ' + period + " (" + year + ") " + "-percent-" + lang + ".png"
+
+
+
+translation = {'group': {'eu': 'Taldea','es':'Grupo'},
+               'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
+               'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
+               'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
+               'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
+               'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
+               'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
+               'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumando que promociona'},
+               'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
+               'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
+               'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
+               'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
+               'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
+               'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
+               'part': {'eu' : 'Atala', 'es': 'Apartado' },
+               'period': {'eu': 'Ebaluazioa','es':'Evaluación'}}
 
 #pl = PageLayout(name="pagelayout")
 #textdoc.automaticstyles.addElement(pl)
@@ -107,10 +126,7 @@ def groupPage(group,lang):
   
   table = Table()
   table.addElement(TableColumn(numbercolumnsrepeated=2))
-  if lang=="eu":
-     headers=["Atala","1. Ebaluazioa"]#,"2. Ebaluazioa","Azken Ebaluazioa"]
-  else:
-     headers=["Apartado","1ª Evaluación"]#,"2ª Evaluación","Evaluación Final"]
+  headers=[translation['part'][lang],'2 ' + translation['period'][lang]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
   tr = TableRow()
   table.addElement(tr)
   for val in headers:
@@ -124,11 +140,11 @@ def groupPage(group,lang):
       tr = TableRow()
       table.addElement(tr)
       for i,val in enumerate(line):
-         if i==0 and not "Konf" in val:
+         if i==0:
             tc = TableCell(stylename="Table")
             tr.addElement(tc)
-            p = P(stylename=tablecontents,text=val)
-         elif val=="EZ ADOS":
+            p = P(stylename=tablecontents,text=translation[val][lang])
+         elif val=="EzKonforme":
             tc = TableCell(stylename="Table")
             tr.addElement(tc)
             p = P(stylename=tablecontentscenterred,text=val)
@@ -142,14 +158,17 @@ def groupPage(group,lang):
   
   blankline = P(text="")
   textdoc.text.addElement(blankline)
-  subjectsp = P(text="%70 baino gainditu gutxiago duten ikasgaiak")
+  if lang=="eu":
+    subjectsp = P(text="%70 baino gainditu gutxiago duten ikasgaiak:")
+  else:
+    subjectsp = P(text="Asignaturas con menos del %70 de aprobados:")
   textdoc.text.addElement(subjectsp)
   blankline = P(text="")
   textdoc.text.addElement(blankline)
   textList = List(stylename="L1")
   
   
-  file = path+"ehunekoak-1. Ebaluazioa-2016-2017-"+group+".csv"
+  file = path+"ehunekoak-"+period+"-"+year+"-"+group+".csv"
   with open(file, 'r', encoding="UTF-8") as results:
      reader = csv.reader(results)
      headers = next(reader, None)  # get first row with headers
@@ -223,12 +242,15 @@ def ikasgaiak():
 
   
 def tutors():
-  df = pd.read_csv("txostena_tutorea-dena.csv",sep=";")
-  taldeak = df.Taldea.unique()
-  zutabeak = ['harreman1', 'harreman2', 'KonfHar', 'material','garbitasun', 'KonfGar', 'Promozionatzen', 'suspasko', 'KonfProm','Suspikasgai', 'KonfIkasgai', 'Suspikasle','Bizikidetza']
+  df = pd.read_csv(path + "reportgruoupdata.csv",sep=",")
+  taldeak = df.group.unique()
+  zutabeak = ['id','group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
+  columns_drop = ['risk34','total','eba']
+  df.drop(columns_drop, axis=1, inplace=True)
+  df.fillna('',inplace=True)
   tdata = {}
   for t in taldeak:
-    dfn = df[df.Taldea==t]
+    dfn = df[df.group==t]
     l=[]
     for column in dfn:
       a=dfn[column].tolist()
@@ -243,6 +265,18 @@ td=tutors()
 
 #print(td["3º A"])
 
+#coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I',  '1J','1L']}, 
+                 #'2º PMAR': {'AG':['2P'],'D':['2P']},           
+                 #'2 ESO': {'AG':['2A','2B', '2C','2D'], 'D':['2H', '2I',  '2J']},
+                 #'3 ESO': {'AG':['3A','3B','3C'], 'D':['3H','3I','3J','3K']},
+                 #'4 ESO': {'AG':['4A','4B','4C','4D'], 'D':['4H', '4I', '4J','4K','4L']},
+                 #'3º PMAR': {'AG':['3D'], 'D':['3L']},
+                 #'1º Bach.': {'AG':['5A','5B'], 'D':[ '5H', '5I', '5J']},
+                 #'2º Bach.': {'AG':['6A','6B'], 'D':['6H', '6I',  '6J']}
+                 #})
+
+
+
 coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
                  '2º PMAR': {'AG':['2º P'],'D':['2º P']},           
                  '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},
@@ -254,6 +288,8 @@ coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D'], 
                  })
 
 courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
+
+
 
 for k in courses:
   coursePage(k,coursegroups[k],lang)

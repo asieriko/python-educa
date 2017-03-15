@@ -80,20 +80,21 @@ class notak:
             AND yeardata.uniquename=names.uniquename \
             AND yeardata.course=grades.course \
             AND NOT (grades.grade='') AND (" + notcourses + ") \
-            AND (" + ebselect + ") AND grades.course!='2016-2017'"
+            AND (" + ebselect + ")"
         if self.debug:
            print(sql)
         self.df = pd.read_sql(sql,con)
         self.df.grade = self.df.grade.astype(int)
         if self.debug:
            print(self.df.head())
-        sqlsubjects = "SELECT * FROM subjects"
+        sqlsubjects = "SELECT * FROM subjects WHERE " + "NOT course = '" + ("' AND NOT course = '").join(
+            excludedCourses) + "'"
         dfsubjects = pd.read_sql(sqlsubjects,con)
         dfsubjects.sort_values('id',inplace=True)
         dfsubjects.drop_duplicates(subset='code',keep='last',inplace=True) #FIXME: Not sure if it gets the last \
         #    because it depends on the database index
         con.close()
-        self.df = pd.merge(self.df,dfsubjects,on="code",how="left")#FIXME: Somethin more global would be right
+        self.df = pd.merge(self.df,dfsubjects,on="code",how="left")#FIXME: Somethin more global would be right . Maybe there's still to much data (columns)
         self.df['bil'] = self.df['lang'].map(self.modeloBil)
         self.df['lang'] = self.df['lang'].map(self.modelo)
         if self.debug:
@@ -802,6 +803,67 @@ class notak:
                 #plt.close()
         return allg
 
+    def generateCourseStatsEvolutionPlots(self,nyears=5,includelast=False):
+        """
+        This funcition generates a plot for each course: 0-2 not passed, 3-4 and 5 or more
+        with the average stats of each period for the las 5 courses
+        :return:creates a plot with the average stats of each period for the las 5 courses
+        """
+        #FIXME: Not only me, but save all pictures in a separate folder!
+        allg = defaultdict(str)
+        for lang in ['AG', 'D', None]:  # [df.lang.unique(),None]:
+            if lang:
+                dflang = self.df[self.df['lang'] == lang]
+            else:
+                dflang = self.df
+            print(dflang[dflang.year == self.year].course.unique())
+            for course in dflang[dflang.year == self.year].course.unique(): #FIXME: Using course it generates a nan course, but with coursename there are problems with and without lomce...
+                if type(course)!=type('a'):
+                    print("Break:",course, " - lang:", lang)
+                    continue
+                missedg = defaultdict(dict)
+                if not lang: lang = "All"
+                if self.debug:
+                    print(course,lang)
+                    
+                datayp = []
+                if includelast:
+                    lastc = len(dflang.year.unique())
+                else:
+                    lastc = -1
+                for y in sorted(dflang.year.unique())[-(nyears+1):lastc]: #FIXME: When a course finishes and there is no data for the next one, the report still generates stats without it
+                    for p in dflang[dflang.year == y].period.unique():
+                        if p == 'Ohiz kanpoko Ebaluazioa': #This is an special period,  only those with pending subjects after the Azkena do it. So skip it to the Final
+                            continue
+                        pt = pd.pivot_table(dflang[(dflang.course == course) & (dflang.year == y) & (dflang.period == p)], index=["uniquename"], values=["grade"], aggfunc=self.lowerThan).fillna('')
+                        missed = self.notPassedStats(pt.grade)
+                        _,prom,riesgo,peligro, _,_= self.generatePiedata(missed)
+                        t = (sum(prom)+sum(riesgo)+sum(peligro))/100
+                        dict1 = {}
+                        dict1.update({'year':y,'period':p,'0-2': sum(prom)/t,'3-4': sum(riesgo)/t,'+5':sum(peligro)/t}) 
+                        datayp.append(dict1)
+                    
+                data = pd.DataFrame(datayp, columns=['year','period','0-2','3-4','+5'])
+                
+                means = data.groupby('period').mean()
+                errors = data.groupby('period').aggregate(np.std)
+                
+                styles1 = ['gs--','y^--','ro--']
+                means.plot(yerr=errors,style=styles1)
+                #means.plot(style=styles1)
+                plt.ylim(0, 100)
+                #plt.xticks(np.array(range(len(dflang.period.unique())))+0.5, dflang.period.unique())
+                
+                #FIXME: The generated plot doesn't have margins at both sides, It's ugly
+                #I can't either keep the colors with the yerr
+                
+                plt.title("Course: "+ course + "(" + lang + ")")
+                #plt.show()
+                plt.savefig(self.workdir + "/" + course + "-" + lang + "-evolution-" + self.langg + ".png")
+                plt.close()
+        return allg
+
+
     def generateYearsAllGoodSubjects(self,period,percentaje,years=None):
         years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016','2016-2017']
         good = []
@@ -1189,23 +1251,26 @@ class notak:
                 return "EzKonforme"
         
         def konfprom(row):
-            if (row["promoting"]/row["total"]>=0.6) & (row["Danger5"]/row["total"]<0.2):
+            if (row["promoting"]>=60) & (row["Danger5"]<20):
                 return "Konforme"
             else:
                 return "EzKonforme"
         
         def konfikas(row):
-            if row[1]>=60:
+            print(row['badsubjs'],row['badsubjs']<40)
+            if row['badsubjs']<40:
                 return "Konforme"
             else:
                 return "EzKonforme"
             
         def topercent(row,col):
-            return row[col]*100/row['total']
+            return float(row[col])*100/int(row['total'])
         
         gst = pd.read_csv(self.workdir+"/groupstats.csv")
         gst.replace({'\.{1}': '','º':'',' ':''}, regex=True,inplace=True)
         gst.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
+        gst["Danger5"] = gst.apply (lambda row: topercent(row,'Danger5'),axis=1)
+        gst["promoting"] = gst.apply (lambda row: topercent(row,'promoting'),axis=1)
         gst["KonfProm"] = gst.apply (lambda row: konfprom(row),axis=1)
         
         gbs = pd.read_csv(self.workdir+"/groupbadsubjs.csv")
@@ -1232,8 +1297,6 @@ class notak:
         zutabeak = ['group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
         alld = alld.reindex(columns=zutabeak)
         alld.sort_values('group',inplace=True)
-        alld["Danger5"] = alld.apply (lambda row: topercent(row,'Danger5'),axis=1)
-        alld["promoting"] = alld.apply (lambda row: topercent(row,'promoting'),axis=1)
         alld.fillna('',inplace=True)
         alld.to_csv(self.workdir+"/reportgruoupdata.csv")
                 
@@ -1243,18 +1306,19 @@ if __name__ == "__main__":
     #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"
     db = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
     ebaluaketak = ['1. Ebaluazioa', '2. Ebaluazioa', '3. Ebaluazioa', 'Azken Ebaluazioa', 'Ohiz kanpoko Ebaluazioa','Final']
-    ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA"]
+    ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA",'Programa de Currículo Adaptado LOMCE']
     divpmar=["3º Div.Cur.","4º Div. Cur.","3º PMAR"]
     batx=["1. Batxilergoa LOE","2. Batxilergoa LOE"]
     dbh=["2. DBH","1. DBH","3. DBH","4. DBH"]
     baliogabekokurtsoak = ucepca
     #files = ["/home/asier/Hezkuntza/SGCC-Erregistroak-15-16/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluación/1º Ev/Sabanas 2º Bach 27-11/1ev-2bach.csv"]
     #n.insertdataDB(files)
-    year = "2016-2017"
+    year = "2015-2016"
     for lang in ['eu','es']:
       n = notak(db,lang)
-      n.setWorkDir("1ebaluaketa16-17")
-      n.getData(year, ebaluaketak, 1, baliogabekokurtsoak)
+      n.setWorkDir("ebaluaketa1516")
+      n.getData(year, ebaluaketak, 6, baliogabekokurtsoak)
+      n.generateFinalGrade()
       #n.removepending()
       #print("course np.mean")
       #n.generateCoursePlots(np.mean)
@@ -1272,14 +1336,14 @@ if __name__ == "__main__":
       #n.generateAllGroupPlots(n.percent)
       #n.generateCoursePlots(np.mean)
       #n.generateCoursePlots(n.percent)
-    
+    n.generateCourseStatsEvolutionPlots()
     #n.generateCourseStatsPlots()
     #print("generate All Stats Plots")
     #n.generateAllStatsPlots()
     #print("generate Stats Student")
     #n.generateStatsAllStudents(doc=True)
-    n.generatePrymarySchoolPlots(np.mean)
-    n.generateDeptPlots([np.mean,n.percent])
+    #n.generatePrymarySchoolPlots(np.mean)
+    #n.generateDeptPlots([np.mean,n.percent])
     
 
 ##Create report for schools. Add in selector lang (D-AG) and then compute for all and each school...    

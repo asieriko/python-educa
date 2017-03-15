@@ -490,7 +490,7 @@ class database:
         """
         con = sqlite3.connect(self.db)
         cur = con.cursor()
-        years = cur.execute("select distinct year from results").fetchall()
+        years = cur.execute("select distinct year from yeardata").fetchall()
         for year in years:
             print((year[0]))
         return [a[0] for a in years]

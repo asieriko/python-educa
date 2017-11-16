@@ -168,13 +168,13 @@ class notak:
         """
         if x == 'D':
             return 'D'
-        elif x in ['A','G','G-A.Eleb.In.','A-A.Eleb.In.']:
+        elif x in ['A','G','G-A.Eleb.In.','A-A.Eleb.In.','G-A.Elea.','A-A.Elea.']:
             return 'AG'
 
     def modeloBil(self, x):
         """
         :param x:list with course language
-        :return:D for D and AG for A or G
+        :return:D for D and AGBil or AGPlur for A or G with english program
         """
         if x == 'D':
             return 'D'
@@ -182,6 +182,8 @@ class notak:
             return 'AG'
         elif x in ['G-A.Eleb.In.','A-A.Eleb.In.']:
             return 'AGbil'
+        elif x in ['G-A.Elea.','A-A.Elea.']:
+            return 'AGPlur'
 
 
     def generatesheet(self, group):
@@ -342,7 +344,7 @@ class notak:
                    diagram[avg5text] = currenteb[years].mean(axis=1)
                 else:
                    diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
-                if self.period != 1:
+                if self.period not in  [1,6]:
                     previouseb = selectperiods[self.periods[self.period - 2]]
                     diagram[prevtext] = previouseb[previouseb.keys()[-1]]
                     diagram=diagram[[prevtext,currenttext,avg5text]]
@@ -370,6 +372,7 @@ class notak:
         :return:
         """
         #dfyearscourses = self.df[self.df.bil=="AGbil"][["course","year"]].drop_duplicates() #gets courses and all years with bil
+        #for l in ['AGBil','AGPlur']:
         dfcourses = self.df[(self.df.bil=="AGbil")&(self.df.year==self.year)][["course","lang"]].drop_duplicates()
         for lang in list(dfcourses.lang.unique())+[None]:  # [df.lang.unique(),None]:
             print(lang)
@@ -403,7 +406,7 @@ class notak:
                    diagram[avg5text] = currenteb[years].mean(axis=1)
                 else:
                    diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
-                if self.period != 1:
+                if self.period  not in  [1,6]:
                     previouseb = selectperiods[self.periods[self.period - 2]]
                     diagram[prevtext] = previouseb[previouseb.keys()[-1]]
                     diagram=diagram[[prevtext,currenttext,avg5text]]
@@ -538,14 +541,15 @@ class notak:
         """
         depts = self.df.dept.unique()
         for dept in depts:
-            if dept == None or dept == 'nan':
+            if dept == None or str(dept) == 'nan':
                 continue
             doc = td.textdoc()
             doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
             print(dept)
+            dept = str(dept)
             doc.addTitle("Departamento: " + dept)
             doc.addParagraph("Este documento contiene un resumen de las calificaciones del departamento.")
-            doc.addParagraph("Contiene 3 apartados con la media de las calificaciones de cada asignatura del departamento y con el porcentaje de alumnos aprobados de cada una de ellas, comparado con la media de los últimos 5 años. El primero de ellasde ambos modelos juntos, los dos siguientes con los de AG y D por separado.")
+            doc.addParagraph("Contiene 3 apartados con la media de las calificaciones de cada asignatura del departamento y con el porcentaje de alumnos aprobados de cada una de ellas, comparado con la media de los últimos 5 años. El primero de ellas de ambos modelos juntos, los dos siguientes con los de AG y D por separado.")
             for lang in [None,'AG', 'D']:  # [df.lang.unique(),None]:
                 if lang:
                     dflang = self.df[self.df['lang'] == lang]
@@ -577,7 +581,7 @@ class notak:
                         diagram[avg5text] = currenteb[years].mean(axis=1)
                     else:
                         diagram[avg5text] = currenteb[years[:-1]].mean(axis=1)
-                    if self.period != 1:
+                    if self.period  not in  [1,6]:
                         previouseb = selectperiods[self.periods[self.period - 2]]
                         diagram[prevtext] = previouseb[previouseb.keys()[-1]]
                         diagram=diagram[[prevtext,currenttext,avg5text]]
@@ -641,7 +645,7 @@ class notak:
         diagram[currenttext] = currenteb[currenteb.keys()[-1]]
         diagram[levellangtext] = levelcurrent[currenteb.keys()[-1]]
         
-        if self.period != 1:
+        if self.period  not in  [1,6]:
             #Append previos eb infor for selected group  
             previouseb = groupperiods[self.periods[self.period - 2]]
             diagram[prevtext] = previouseb[previouseb.keys()[-1]]
@@ -977,6 +981,7 @@ class notak:
                 ghtml = ""
                 if doc:
                     doc = td.textdoc()
+                    doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
                     doc.addTitle("Resumen del grupo: " +group)
                     doc.addTitle2("Taldeko emaitzak/Resultados del grupo",False)
                     doc.addTitle3("Promozioa/Promoción")
@@ -1245,7 +1250,10 @@ class notak:
         #and konfprom function
         
         def konf5(row,cols):
-            if row[cols[0]]+row[cols[0]] >= 10:
+            print(row,cols)
+            print(row[cols[0]],type(row[cols[0]]))
+            print(row[cols[1]],type(row[cols[1]]))
+            if float(row[cols[0]])+float(row[cols[1]]) >= 10:
                 return "Konforme"
             else:
                 return "EzKonforme"
@@ -1352,3 +1360,18 @@ if __name__ == "__main__":
 #s=pd.pivot_table(n.df[(n.df.course == "1 ESO") & (n.df.year == "2012-2013") & (n.df.period == n.periods[5])], index=["uniquename","primaryschool","lang"], values=["grade"],columns=["subject"]).fillna('')    
 ##more data:
 #select names.fullname,yeardata.uniquename,yeardata.lang,yeardata.repeating from yeardata,names where year="2015-2016" and  yeardata.course="1. DBH LOMCE" and names.primaryschool="CPEIP Pam. Mendillorri" and names.uniquename=yeardata.uniquename order by names.uniquename
+
+#import notakeb as notak
+#db = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
+#ebaluaketak = ['1. Ebaluazioa', '2. Ebaluazioa', '3. Ebaluazioa', 'Azken Ebaluazioa', 'Ohiz kanpoko Ebaluazioa','Final']
+#ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA",'Programa de Currículo Adaptado LOMCE']
+#divpmar=["3º Div.Cur.","4º Div. Cur.","3º PMAR"]
+#batx=["1. Batxilergoa LOE","2. Batxilergoa LOE"]
+#dbh=["2. DBH","1. DBH","3. DBH","4. DBH"]
+#baliogabekokurtsoak = ucepca
+#year = "2016-2017"
+#for lang in ['eu','es']:
+    #n = notak.notak(db,lang)
+    #n.setWorkDir("2. Ebaluazioa2016-2017")
+    #n.getData(year, ebaluaketak, 2, baliogabekokurtsoak)
+    #n.generateCourseBilvsCooursePlots(n.percent)

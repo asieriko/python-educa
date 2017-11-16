@@ -1,16 +1,11 @@
-import requests
+import requests, os
 from bs4 import BeautifulSoup
 
 class GetEDUCAdata():
-
-    username = ""
-    password = ""
-    lang = "eu"
-    path = "/home/asier/Hezkuntza/python-hezkuntza/Python-educa/educa.csv"
+    
     params = []
     years = []
     verbose = True
-    p = [['rbIdiomaConsulta',lang]]
 
     def __init__(self, username="", password="", verbose=True):
         self.username = username
@@ -19,10 +14,11 @@ class GetEDUCAdata():
         self.coursesurl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDFCargaAjax"
         self.exporturl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDF"
         self.logouturl = "https://educages.navarra.es/Educa/public/Logout"
+        self.path = os.path.dirname(os.path.realpath(__file__))
         self.s = requests.Session()
         self.body = {}
-        self.updatebody()
         self.lang = "eu"
+        self.updatebody()
         self.verbose = verbose
         self.params = [['rbIdiomaConsulta',self.lang]]
         p = [['rbIdiomaConsulta',self.lang]]
@@ -104,6 +100,8 @@ class GetEDUCAdata():
     def selectcourses(self,courses):
         for course in courses:
             self.params.append(['lbGrupos',course[1]])
+            if self.verbose: 
+                print(course[1],course[0])
     
     def getsubjects(self):
         if self.verbose: 
@@ -197,7 +195,7 @@ class GetEDUCAdata():
 
     def getdata(self,path=None):
         if not path:
-            path = self.path
+            path = os.path.join(self.path,"educa.csv")
         r = self.s.post(self.exporturl, data=self.params)
         if self.verbose: print(r.headers)
         print("Get data: ", r.status_code)
@@ -210,30 +208,97 @@ class GetEDUCAdata():
     def getallcurrentgrades(self):
         self.login()
         years = self.getyears()
-        courses = self.getcourses(years[-1])
+        courses = self.getcourses(years[-1]) #At the end of the course, EDUCA has also next course data so current becomenes next...
         self.selectcourses(courses)
         subjects = self.getsubjects()
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["grades"])
-        self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+str(years[-1][0])+".csv")
+        self.getdata(os.path.join(self.path,"grades"+str(years[-1][0])+".csv"))
         self.logout()
+
+    def getallyeargrades(self,year):
+        self.login()
+        years = self.getyears()
+        for yearlist in years:
+            if yearlist[0] == year:
+                year = yearlist
+        courses = self.getcourses(year)
+        self.selectcourses(courses)
+        subjects = self.getsubjects()
+        self.selectsubjects(subjects)
+        self.getpossibledata()
+        self.selectdata(["grades"])
+        self.getdata(os.path.join(self.path,"grades"+str(year[0])+".csv"))
+        self.logout()
+
         
     def getnamesyeardata(self,year=None):
         self.login()
         if not year:
             years = self.getyears()
         else:
-            years = [year]
+            years = [year] #FIXME: look at getallyeargrades
         courses = self.getcourses(years[-1])
         self.selectcourses(courses)
         subjects = self.getsubjects()
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["personal","year"])
-        self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/names-year"+str(years[-1][0])+".csv")
+        self.getdata(os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv"))
         self.logout()
-        
+
+
+    def getnamesyeardata2(self,year=None):
+        self.login()
+        years = self.getyears()
+        if year:
+            for y in years:
+                if year==y[0]:
+                    years=[y]
+        print(y)
+        courses = self.getcourses(years[-1])
+        self.selectcourses(courses)
+        subjects = self.getsubjects()
+        self.selectsubjects(subjects)
+        self.getpossibledata()
+        self.selectdata(["personal","year"])
+        self.getdata(os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv"))
+        self.logout()
+
+    def getnames4gradedata(self,year=None):
+        self.login()
+        if not year:
+            years = self.getyears()
+        else:
+            years = [year]  #FIXME: look at getallyeargrades
+        courses = [["4A","85481"],["4B","85482"],["4C","85483"],["4D","85484"],["4H","85485"],["4I","85476"],["4J","85477"],["4K","85478"],["4L","85479"]] #4ht in 16-17
+        for course in courses:
+            self.params.append(['lbGrupos',course[1]])
+        self.params.append(['cbCursoEscolar',years[-1][1]])
+        subjects = self.getsubjects()
+        self.selectsubjects(subjects)
+        self.getpossibledata()
+        self.selectdata(["personal","grades"])
+        self.getdata(os.path.join(self.path,"/names-year"+str(years[-1][0])+".csv"))
+        self.logout()
+
+    def getnamesgroupgradedata(self,group,year=None):
+        self.login()
+        if not year:
+            years = self.getyears()
+        else:
+            years = [year]  #FIXME: look at getallyeargrades or getalldata
+        self.params.append(['lbGrupos',group])
+        self.params.append(['cbCursoEscolar',years[-1][1]])
+        subjects = self.getsubjects()
+        self.selectsubjects(subjects)
+        self.getpossibledata()
+        self.selectdata(["personal","grades"])
+        self.getdata(os.path.join(self.path,"names-year-"+str(group)+"-"+str(years[-1][0])+".csv"))
+        self.logout()
+    
+    
     def getalldata(self,data,syear=None):
         self.login()
         years = self.getyears()
@@ -241,14 +306,14 @@ class GetEDUCAdata():
             for y in years:
                 if y[0] == syear:
                     years = [y]
-        for year in years:
+        for year in years: #FIXME: if a year is selected, the for works??
             courses = self.getcourses(year)
             self.selectcourses(courses)
             subjects = self.getsubjects()
             self.selectsubjects(subjects)
             self.getpossibledata()
             self.selectdata([data])
-            self.getdata("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/"+data+str(year[0])+".csv")
+            self.getdata(os.path.join(self.path,data+str(year[0])+".csv"))
         self.logout()
         
         
@@ -257,15 +322,16 @@ if __name__ == "__main__":
     user = input("username: ")
     passwd = getpass.getpass()
     ged = GetEDUCAdata(user,passwd,verbose=False)
-    print(ged.params)
+    #ged.getnames4gradedata()
     #ged.getallcurrentgrades()
-    ged.getalldata("personal","2016-2017")
+    ged.setfile("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data")
+    #ged.getalldata("personal","2016-2017")
     #print(ged.params)
     #ged.resetparams()
-    ged.getalldata("year","2016-2017")
+    ged.getalldata("end","2016-2017")
     #print(ged.params)
     #ged.resetparams()
-    ##ged.getalldata("grades")
+    #ged.getalldata("grades")
     ##print(ged.params)
     ##ged.resetparams()
     #ged.getalldata("end")

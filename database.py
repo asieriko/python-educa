@@ -45,6 +45,7 @@ class database:
         #These two to improve promoting row, its one or the other or none? (for the current course), never both
         self.csv_degree_decision = {'eu':'Tituluaren gaineko erabakia','es':'Decisión sobre el título'}
         self.csv_promoting_decicision = {'eu':'Kurtsoz igotzearen gaineko erabakia','es':'Decisión sobre la promoción'}
+        self.csv_status = {'eu':'Egoera','es':'Estado'}
         #Importing subjects, and grades, (year and name already defined)
         self.csv_period = {'eu':'Ebaluaketa','es':'Evaluación'}
         self.csv_subject_name = {'eu':'Irakasgaiaren Izena','es':'Nombre Asignatura'}
@@ -292,8 +293,9 @@ class database:
                 year = self.get_csv_header_index(headers,self.csv_year)
                 degree = self.get_csv_header_index(headers,self.csv_degree_decision)
                 promo = self.get_csv_header_index(headers,self.csv_promoting_decicision)
+                status = self.get_csv_header_index(headers,self.csv_status)
                 for row in reader:
-                    promoting = row[degree]+row[promo]  #One of them is always ""
+                    promoting = row[degree]+row[promo]+row[status]  #One of them is always ""
                     cur.execute(
                         "UPDATE yeardata SET promoting = ? WHERE uniquename = ? and year = ?",
                         (promoting, row[uniquename], row[year]))
@@ -480,6 +482,7 @@ class database:
         cur = con.cursor()
         subjects = cur.execute("select name_eu,code from subjects").fetchall()
         d = {key: value for (key, value) in subjects}
+        print(d)
         con.close()
         return d
 
@@ -573,6 +576,52 @@ class database:
             a,b,c = row
             results.append([a,b,c])
         return results
+
+    def test_subjects(self):
+        '''Tests if every subject has its abreviation and data'''
+        result = defaultdict(str)
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        sql = "select distinct(code),subject from grades where grades.code not in (select code from abreviations)"
+        result = cur.execute(sql).fetchall()
+        con.close()
+        return result
+
+    
+    def test_students(self,year=None):
+        '''Tests if every student has grades, name and is in yeardata'''
+        result = defaultdict(str)
+        if year == None:
+            years = self.get_years()
+        else:
+            years = [year]
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        for year in years:
+            sql = "select distinct(grades.uniquename) from grades where grades.uniquename not in (select uniquename from yeardata where year='" + year + "') and year='" + year + "'"
+            result[year] = set(cur.execute(sql).fetchall())
+            sql = "select distinct(names.uniquename) from names where names.uniquename not in (select uniquename from grades)"
+            result[year].update(cur.execute(sql).fetchall())
+            sql = "select distinct(yeardata.uniquename) from yeardata where yeardata.uniquename not in (select uniquename from grades where year='" + year + "') and year='" + year + "'"
+            result[year].update(cur.execute(sql).fetchall())
+        con.close()
+        return result
+    
+    def test_promoting(self,year=None):
+        result = defaultdict(str)
+        if year == None:
+            years = self.get_years()
+        else:
+            years = [year]
+        con = sqlite3.connect(self.db)
+        cur = con.cursor()
+        for year in years:
+            sql = "select distinct(names.uniquename),fullname,year from yeardata,names where names.uniquename=yeardata.uniquename and promoting='' and year='" + year + "'"
+            result[year] = set(cur.execute(sql).fetchall())
+        sql = "select year,count(uniquename) from yeardata where promoting='' group by year"
+        result['All'] = cur.execute(sql).fetchall()
+        con.close()
+        return result
 
     def process_promotion_stats(self,results):
         '''

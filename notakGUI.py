@@ -1,4 +1,5 @@
 import sys
+import os
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 
 import numpy as np
@@ -38,13 +39,15 @@ class Ui(QtWidgets.QMainWindow):
         self.ui.fileB.clicked.connect(self.selectdb)
         self.ui.updateDataB.clicked.connect(self.updatedata)
         self.ui.runB.clicked.connect(self.run)
+        self.newYearCB.clicked.connect(self.newyear)
         self.outcsv = ""
         self.show()
         self.n = ''
+        self.path = os.path.dirname(os.path.realpath(__file__))
 
     @QtCore.pyqtSlot()
     def selectdb(self):
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Select Database file", "","All Files (*);;sqlite3 files (*.db)")
+        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self,"Select Database file", "","sqlite3 files (*.db);;All Files (*)")
         print(fileName)
         if fileName:
             self.ui.dffileLE.setText(fileName)
@@ -56,18 +59,42 @@ class Ui(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def updatedata(self):
+        year = self.ui.yearCB.currentText()
+        #login = Login()
+        #if login.exec_() == QtWidgets.QDialog.Accepted:
+            #user = login.textName.text()
+            #passwd = login.textPass.text()
+            #try:
+                #getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
+                #getdata.getallcurrentgrades()
+                #self.data.delete_last_years_grades(year)
+                #self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
+            #except:
+                #print("An error ocurred")
+                #QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to update data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
+        print(os.path.join(self.path,"grades"+year+".csv"))
+        self.data.delete_last_years_grades(year)
+        self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
+
+    @QtCore.pyqtSlot()
+    def newyear(self):
+        year = max(self.years)
+        ysplit = year.split("-")
+        year = str(int(ysplit[0])+1)+"-"+str(int(ysplit[1])+1)
+        print(year)
         login = Login()
         if login.exec_() == QtWidgets.QDialog.Accepted:
             user = login.textName.text()
             passwd = login.textPass.text()
             try:
                 getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
-                getdata.getallcurrentgrades()
-                data.delete_last_years_grades(year)
-                data.insert_grades(["/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+year+".csv"])
+                getdata.getnamesyeardata2(year)
+                self.data.insert_names([os.path.join(self.path,"names-year-"+year+".csv")])
+                self.data.insert_yeardata([os.path.join(self.path,"names-year-"+year+".csv")])
             except:
                 print("An error ocurred")
-                QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to update data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
+                QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to get new year's data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
+        self.ui.yearCB.addItem(year) #Fixme: Insert in order
 
     @QtCore.pyqtSlot()
     def run(self):
@@ -77,9 +104,10 @@ class Ui(QtWidgets.QMainWindow):
         ebaluaketak = [self.ui.periodCB.itemText(i) for i in range(self.ui.periodCB.count())]
         print(ebaluaketak,year,eb,ebn)
         ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
+        dbhb=["1 ESO","2 ESO","3 ESO","4 ESO","1º Bach"]
         baliogabekokurtsoak = ucepca
         for lang in ['eu','es']:
-            self.n = notak.notak(self.db,lang)
+            self.n = notak.notak(self.db,lang,debug=True)
             self.n.setWorkDir(eb+year)
             if eb == 'Final':
                 self.n.generateFinalGrade()
@@ -107,20 +135,20 @@ class Ui(QtWidgets.QMainWindow):
                     self.n.generateGroupStatsPlots(t)
             if self.ui.allGroupStatsPlotsEs.isChecked() and lang == 'es':
                 print("All group stats plots")
-                n.generateAllGroupStatsPlots()
+                self.n.generateAllGroupStatsPlots()
             if self.ui.allGroupStatsPlotsEu.isChecked() and lang == 'eu':
                 print("All group stats plots")
-                n.generateAllGroupStatsPlots()
+                self.n.generateAllGroupStatsPlots()
             if self.ui.passPercentEs.isChecked() and lang == 'es':
                 taldeak = self.n.df[self.n.df.year == year].cgroup.unique()
                 print("Group pass percent")
                 for t in taldeak:
-                    self.n.generatePassPercent(ebaluaketak[eb],year,t)
+                    self.n.generatePassPercent(ebaluaketak[ebn],year,t)
             if self.ui.passPercentEu.isChecked() and lang == 'eu':
                 taldeak = self.n.df[self.n.df.year == year].cgroup.unique()
                 print("Group pass percent")
                 for t in taldeak:
-                    self.n.generatePassPercent(ebaluaketak[eb],year,t)
+                    self.n.generatePassPercent(ebaluaketak[ebn],year,t)
             if self.ui.allGroupPlotsEs.isChecked() and lang == 'eu':
                 print("All group plots np.mean")
                 self.n.generateAllGroupPlots(np.mean)
@@ -133,10 +161,10 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllGroupPlots(self.n.percent)
             if self.ui.promCoursePlotsEs.isChecked() and lang == 'es':
                 print("course prom plots")
-                self.n.promcourseplots(ebaluaketak[eb])
+                self.n.promcourseplots(ebaluaketak[ebn])
             if self.ui.promCoursePlotsEu.isChecked() and lang == 'eu':
                 print("course prom plots")
-                self.n.promcourseplots(ebaluaketak[eb])    
+                self.n.promcourseplots(ebaluaketak[ebn])    
             if self.ui.bilingualCoursePlotsEs.isChecked() and lang == 'es':
                 print("Bilingual plots")
                 self.n.generateCourseBilvsCooursePlots(np.mean)

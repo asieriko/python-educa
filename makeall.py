@@ -7,23 +7,10 @@ import getEducaData as ged
 if __name__=="__main__":
     dbfile = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
     data = db.database(dbfile)
-    year = "2016-2017"
+    year = "2017-2018"
     y = input("Year ["+year+"]:")
     if y != '':
         year = y
-    ud = input("Update data y/N: ")
-    if ud in ['y','Y']:
-        print("updating data")
-        user = input("username: ")
-        passwd = getpass.getpass()
-        try:
-            getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
-            getdata.getallcurrentgrades()
-            data.delete_last_years_grades(year)
-            data.insert_grades(["/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+year+".csv"])
-        except:
-            print("An error ocurred")
-            raise
     ebaluaketak = ['1. Ebaluazioa', '2. Ebaluazioa', '3. Ebaluazioa', 'Azken Ebaluazioa', 'Ohiz kanpoko Ebaluazioa','Final']
     print("Hautatu ebaluaketa")
     for i,eb in enumerate(ebaluaketak):
@@ -31,14 +18,29 @@ if __name__=="__main__":
     eb = len(ebaluaketak)
     while eb not in list(range(len(ebaluaketak))):
         eb = int(input("Sartu eb zenbakia: "))-1
+    ud = input("Update data y/N: ")
+    if ud in ['y','Y']:
+        print("updating data")
+        user = input("username: ")
+        passwd = getpass.getpass()
+        try:
+            getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
+            getdata.setfile("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data")
+            getdata.getallyeargrades(year)
+            data.delete_last_years_grades(year)
+            data.insert_grades(["/home/asier/Hezkuntza/python-hezkuntza/python-educa/data/grades"+year+".csv"])
+        except:
+            print("An error ocurred")
+            raise
     ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
     baliogabekokurtsoak = ucepca
-    for lang in ['eu','es']:
+    for lang in ['eu']:#,'es']:
         n = notak.notak(dbfile,lang)
         n.setWorkDir(ebaluaketak[eb]+year)
+        n.getData(year, ebaluaketak, eb+1, baliogabekokurtsoak)
         if ebaluaketak[eb] == 'Final':
             n.generateFinalGrade()
-        n.getData(year, ebaluaketak, eb+1, baliogabekokurtsoak)
+        
 
         print("course np.mean")
         n.generateCoursePlots(np.mean)

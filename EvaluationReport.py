@@ -75,9 +75,9 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="es"
-year="2016-2017"
-period="2. Ebaluazioa"
+lang="eu"
+year="2017-2018"
+period="1. Ebaluazioa"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -100,7 +100,9 @@ translation = {'group': {'eu': 'Taldea','es':'Grupo'},
                'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
                'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
                'part': {'eu' : 'Atala', 'es': 'Apartado' },
-               'period': {'eu': 'Ebaluazioa','es':'Evaluación'}}
+               'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
+               'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
+               'Konforme': {'eu': 'Ados','es':'Conforme'}}
 
 #pl = PageLayout(name="pagelayout")
 #textdoc.automaticstyles.addElement(pl)
@@ -124,40 +126,47 @@ def groupPage(group,lang):
   blankline = P(text="")
   textdoc.text.addElement(blankline)
   
-  table = Table()
-  table.addElement(TableColumn(numbercolumnsrepeated=2))
-  headers=[translation['part'][lang],'2 ' + translation['period'][lang]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
-  tr = TableRow()
-  table.addElement(tr)
-  for val in headers:
-     tc = TableCell(stylename="Table")
-     tr.addElement(tc)
-     p = P(stylename=tableheaders,text=val)
-     tc.addElement(p)
-  #f = [["garbitasuna",3,6],["materiala",6,8],["Adostasuna", "Ez konforme","konforme"],["Harremanak1",7,8],["Harremanak2",6,7],["Adostasuna", "konforme","konforme"]]
-  f = td[group]
-  for line in f:
-      tr = TableRow()
-      table.addElement(tr)
-      for i,val in enumerate(line):
-         if i==0:
-            tc = TableCell(stylename="Table")
-            tr.addElement(tc)
-            p = P(stylename=tablecontents,text=translation[val][lang])
-         elif val=="EzKonforme":
-            tc = TableCell(stylename="Table")
-            tr.addElement(tc)
-            p = P(stylename=tablecontentscenterred,text=val)
-         else:
-            tc = TableCell(stylename="Table")
-            tr.addElement(tc)	   
-            p = P(stylename=tablecontentscenter,text=val)
-         tc.addElement(p)
+  if td != '':
+    table = Table()
+    table.addElement(TableColumn(numbercolumnsrepeated=2))
+    headers=[translation['part'][lang],'2 ' + translation['period'][lang]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
+    tr = TableRow()
+    table.addElement(tr)
+    for val in headers:
+        tc = TableCell(stylename="Table")
+        tr.addElement(tc)
+        p = P(stylename=tableheaders,text=val)
+        tc.addElement(p)
+    #f = [["garbitasuna",3,6],["materiala",6,8],["Adostasuna", "Ez konforme","konforme"],["Harremanak1",7,8],["Harremanak2",6,7],["Adostasuna", "konforme","konforme"]]
+    f = td[group]
+    for line in f:
+        if "group" in line: #FIXME: If not all group tables contain a row with the group name (also in text header...)
+            continue
+        tr = TableRow()
+        table.addElement(tr)
+        for i,val in enumerate(line):
+            if i==0:
+                tc = TableCell(stylename="Table")
+                tr.addElement(tc)
+                p = P(stylename=tablecontents,text=translation[val][lang])
+            elif val=="EzKonforme":
+                tc = TableCell(stylename="Table")
+                tr.addElement(tc)
+                p = P(stylename=tablecontentscenterred,text=translation[val][lang])
+            elif val=="Konforme":
+                tc = TableCell(stylename="Table")
+                tr.addElement(tc)
+                p = P(stylename=tablecontentscenter,text=translation[val][lang])
+            else:
+                tc = TableCell(stylename="Table")
+                tr.addElement(tc)	   
+                p = P(stylename=tablecontentscenter,text=val)
+            tc.addElement(p)
 
-  textdoc.text.addElement(table)
-  
-  blankline = P(text="")
-  textdoc.text.addElement(blankline)
+    textdoc.text.addElement(table)
+    
+    blankline = P(text="")
+    textdoc.text.addElement(blankline)
   if lang=="eu":
     subjectsp = P(text="%70 baino gainditu gutxiago duten ikasgaiak:")
   else:
@@ -261,7 +270,9 @@ def tutors():
 
 
 ikasgai=ikasgaiak()
+td = ''
 td=tutors()  
+
 
 #print(td["3º A"])
 
@@ -277,12 +288,12 @@ td=tutors()
 
 
 
-coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E'], 'D':['1.H', '1.I',  '1.J','1. K','1.L']}, 
                  '2º PMAR': {'AG':['2º P'],'D':['2º P']},           
-                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},
-                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J','3.K']},
-                 '4 ESO': {'AG':['4º A','4º B','4º C','4º D'], 'D':['4.H', '4.I',  '4.J','4.K','4.L']},
-                 '3º PMAR': {'AG':['3º D'], 'D':['3.L']},
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2. K']},
+                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J']},
+                 '4 ESO': {'AG':['4º A','4º B','4º C'], 'D':['4.H', '4.I',  '4.J','4.K']},
+                 '3º PMAR': {'AG':['3º D'], 'D':['3.D']},
                  '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
                  '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
                  })
@@ -295,7 +306,7 @@ for k in courses:
   coursePage(k,coursegroups[k],lang)
   
   
-textdoc.save("report-"+lang+".odt")  
+textdoc.save("report-"+period+year+"-"+lang+".odt")  
 
 #coursegroups = OrderedDict({ '1. DBH LOMCE': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
                  #'2. DBH LOMCE': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},

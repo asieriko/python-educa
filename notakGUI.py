@@ -60,21 +60,18 @@ class Ui(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def updatedata(self):
         year = self.ui.yearCB.currentText()
-        #login = Login()
-        #if login.exec_() == QtWidgets.QDialog.Accepted:
-            #user = login.textName.text()
-            #passwd = login.textPass.text()
-            #try:
-                #getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
-                #getdata.getallcurrentgrades()
-                #self.data.delete_last_years_grades(year)
-                #self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
-            #except:
-                #print("An error ocurred")
-                #QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to update data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
-        print(os.path.join(self.path,"grades"+year+".csv"))
-        self.data.delete_last_years_grades(year)
-        self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
+        login = Login()
+        if login.exec_() == QtWidgets.QDialog.Accepted:
+            user = login.textName.text()
+            passwd = login.textPass.text()
+            try:
+                getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
+                getdata.getallcurrentgrades()
+                self.data.delete_last_years_grades(year)
+                self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
+            except:
+                print("An error ocurred")
+                QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to update data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
 
     @QtCore.pyqtSlot()
     def newyear(self):

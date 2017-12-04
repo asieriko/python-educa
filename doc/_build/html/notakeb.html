@@ -1,0 +1,761 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Notakeb module &mdash; Python Educa 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Python Educa 0.1 documentation" href="index.html"/>
+        <link rel="next" title="database module" href="database.html"/>
+        <link rel="prev" title="Welcome to Python Educa’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Python Educa
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Notakeb module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">database module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="geteducadata.html">getEducaData module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">Python Educa</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Notakeb module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/notakeb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="notakeb-module">
+<h1>Notakeb module<a class="headerlink" href="#notakeb-module" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<span class="target" id="module-notakeb"></span><dl class="class">
+<dt id="notakeb.notak">
+<em class="property">class </em><code class="descclassname">notakeb.</code><code class="descname">notak</code><span class="sig-paren">(</span><em>db</em>, <em>lang='es'</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="notakeb.notak.askabitutorinfo">
+<code class="descname">askabitutorinfo</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.askabitutorinfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="notakeb.notak.barcolors">
+<code class="descname">barcolors</code><em class="property"> = ['#6CA439', '#3074AE', '#517B2B', '#36521D', '#007CC3']</em><a class="headerlink" href="#notakeb.notak.barcolors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.createDir">
+<code class="descname">createDir</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.createDir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.finalgrade">
+<code class="descname">finalgrade</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.finalgrade" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateAllGroupPlots">
+<code class="descname">generateAllGroupPlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateAllGroupPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function generates a plot for each group with the grades/pass% of each subject depending on func
+If the period is not the first, plots have a series with the previous period</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateAllGroupStatsPlots">
+<code class="descname">generateAllGroupStatsPlots</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateAllGroupStatsPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function generates a plot for each group: 0-2 not passed, 3-4 and 5 or more
+for current year and period</p>
+<p>:return:creates plots with 2 subplots, the first one an histogram with the number of students with X not passed
+subjects, and another pie diagrm with promotion information (0-2,3-4,&gt;4)
+Also returns a dic with groups as keys and [number of not passed subjects, number of studengs with all passed,
+1-2 missed, 3-4 missed,&gt;4 missed]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateAllStatsPlots">
+<code class="descname">generateAllStatsPlots</code><span class="sig-paren">(</span><em>year=None</em>, <em>period=None</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateAllStatsPlots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateCourseBilPlots">
+<code class="descname">generateCourseBilPlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateCourseBilPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>#FIXME: Description
+This function generates plots for each course with bilingual classess¿: One for AG languages, another for D and?
+the last one for all of them for current year and period
+If the period is not the first, plots have a series with the previous period
+All plots have a series with the average of the last &#8220;5&#8221; years</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateCourseBilvsCooursePlots">
+<code class="descname">generateCourseBilvsCooursePlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateCourseBilvsCooursePlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>#FIXME: Description
+This function generates plots for each course with bilingual classess vs The whole course
+the last one for all of them for current year and period
+It only takes the current period</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateCoursePlots">
+<code class="descname">generateCoursePlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateCoursePlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This funcition generates 3 plots for each course: One for AG languages, another for D and
+the last one for all of them for current year and period
+If the period is not the first, plots have a series with the previous period
+All plots have a series with the average of the last &#8220;5&#8221; years</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateCourseStatsEvolutionPlots">
+<code class="descname">generateCourseStatsEvolutionPlots</code><span class="sig-paren">(</span><em>nyears=5</em>, <em>includelast=False</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateCourseStatsEvolutionPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This funcition generates a plot for each course: 0-2 not passed, 3-4 and 5 or more
+with the average stats of each period for the las 5 courses
+:return:creates a plot with the average stats of each period for the las 5 courses</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateCourseStatsPlots">
+<code class="descname">generateCourseStatsPlots</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateCourseStatsPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This funcition generates a plot for each course: 0-2 not passed, 3-4 and 5 or more
+for current year and period
+:return:creates plots with 2 subplots, the first one an histogram with the number of students with X not passed
+subjects, and another pie diagrm with promotion information (0-2,3-4,&gt;4)
+Also returns a dic with courses as keys and [number of not passed subjects, number of studengs with all passed,
+1-2 missed, 3-4 missed,&gt;4 missed]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateDeptPlots">
+<code class="descname">generateDeptPlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateDeptPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This funcition generates 3 plots for each course: One for AG languages, another for D and
+the last one for all of them for current year and period
+If the period is not the first, plots have a series with the previous period
+All plots have a series with the average of the last &#8220;5&#8221; years</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateFinalGrade">
+<code class="descname">generateFinalGrade</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateFinalGrade" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function geneates new rows with the final grade for each year-studet-subject
+This final grade is the las ordinary one if passed or the extraordinary one.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateGroupPlots">
+<code class="descname">generateGroupPlots</code><span class="sig-paren">(</span><em>group</em>, <em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateGroupPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function generates a plot for the group with the grades/pass% of each subject depending on func
+If the period is not the first, plots have a series with the previous period</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateGroupStatsPlots">
+<code class="descname">generateGroupStatsPlots</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateGroupStatsPlots" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateORpandas">
+<code class="descname">generateORpandas</code><span class="sig-paren">(</span><em>name</em>, <em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateORpandas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatePassPercent">
+<code class="descname">generatePassPercent</code><span class="sig-paren">(</span><em>period</em>, <em>year</em>, <em>group=None</em>, <em>percentaje=70</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatePassPercent" title="Permalink to this definition">¶</a></dt>
+<dd><p>generates CSV files whit information about subjects and its passin %</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatePiePlot">
+<code class="descname">generatePiePlot</code><span class="sig-paren">(</span><em>missed</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatePiePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a pie plot from the missed list</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>missed</strong> &#8211; a list with the number of students for each number of not passed subjectcs</li>
+<li><strong>name</strong> &#8211; the name for the title of the diagram</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None, it stores the plot in the filesystem</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatePiedata">
+<code class="descname">generatePiedata</code><span class="sig-paren">(</span><em>missed</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatePiedata" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>missed</strong> &#8211; a list with the number of students for each number of not passed subjectcs</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return p:</th><td class="field-body">a list with 3 values, number of students with &lt;=2 not passed subjects, number of students with 3-4 not passed subjects, number of students with &gt;=4 not passed subjects</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return prom:</th><td class="field-body">a list with the number of students with 0-1-2 not passed subjects</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return risk:</th><td class="field-body">a list with the number of students with 3-4 not passed subjects</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return danger:</th><td class="field-body">a list with the number of students with 5-6... not passed subjects</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return left:</th><td class="field-body">a list for with the x coordinates of the diagram bar</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Return legendhist:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">a list with the number of not passed subjects as legend for the diagram bar</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatePlot">
+<code class="descname">generatePlot</code><span class="sig-paren">(</span><em>diagram</em>, <em>func</em>, <em>coursegroup</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a bar plot from the diagram dataframe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>diagram</strong> &#8211; Dataframe with the data to be ploted</li>
+<li><strong>func</strong> &#8211; it can be the average of the grades (mean) or the percentaje of passed for each subject</li>
+<li><strong>coursegroup</strong> &#8211; only needed to create the filename</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Return figurefile:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">The name of the stored plot (not the path)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatePrymarySchoolPlots">
+<code class="descname">generatePrymarySchoolPlots</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatePrymarySchoolPlots" title="Permalink to this definition">¶</a></dt>
+<dd><p>#FIXME: Description
+This function generates plots for the first course and each original school
+the last one for all of them for current year and period
+It only takes the current period</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> &#8211; The function to use for aggregating grades, either np.mean or self.percent</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsAllStudents">
+<code class="descname">generateStatsAllStudents</code><span class="sig-paren">(</span><em>mod=None</em>, <em>groups=None</em>, <em>doc=False</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsAllStudents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a html file foreach group, which includes a table with each student marks (present and past periods)
+and also a graph with the same data plus a column with the average of the course</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsCourse">
+<code class="descname">generateStatsCourse</code><span class="sig-paren">(</span><em>year</em>, <em>ebals</em>, <em>mod=None</em>, <em>course=None</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsCourse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsGroup">
+<code class="descname">generateStatsGroup</code><span class="sig-paren">(</span><em>group</em>, <em>diagrams=True</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>#FIXME: ebal and ebals!!
+for a year, period (ebals[-1], ebals should be alist), ebal is only used for titles. and a group
+generates:
+0- A list with all subjects passed %
+1- A list with subjects with less than 70 of students passess, and its %
+2- Average grade for each subject
+3- Number of not passed subjects, and average grade for each student
+4- Name for the pie plot
+5- Name for subjects mean plot
+6- Name for subjects percentaje plot
+Optionally if diagrms=True also generates those plots</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsStudent">
+<code class="descname">generateStatsStudent</code><span class="sig-paren">(</span><em>student</em>, <em>fullname</em>, <em>groupgrades</em>, <em>doc=False</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsStudent" title="Permalink to this definition">¶</a></dt>
+<dd><p>generates html with a table for the students with subjects and his marks side by side with all group marks
+studentgroupgrades is a DataFrame with those marks</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>student</strong> &#8211; uniquename of the student</li>
+<li><strong>fullname</strong> &#8211; The name of the studetns to use as title for the diagrams and filename</li>
+<li><strong>groupgrades</strong> &#8211; the grades of the group of the student to create a comparative diagram</li>
+<li><strong>doc</strong> &#8211; a textdoc() object to append the report of the student (default False)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return html:</th><td class="field-body"><p class="first last">html code with the report of the student (grades)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsStudentPandas">
+<code class="descname">generateStatsStudentPandas</code><span class="sig-paren">(</span><em>year</em>, <em>ebal</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsStudentPandas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateStatsSubjectsPandas">
+<code class="descname">generateStatsSubjectsPandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateStatsSubjectsPandas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generateYearsAllGoodSubjects">
+<code class="descname">generateYearsAllGoodSubjects</code><span class="sig-paren">(</span><em>period</em>, <em>percentaje</em>, <em>years=None</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generateYearsAllGoodSubjects" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatepending">
+<code class="descname">generatepending</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatepending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a pandas dataframe with pending subjects (the ones not passed from the previous course)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.generatesheet">
+<code class="descname">generatesheet</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.generatesheet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a table with the grades for each student and subject
+for the configured year and period
+Only for current year and eb&#8217;</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> &#8211; Name of the group</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.getData">
+<code class="descname">getData</code><span class="sig-paren">(</span><em>year</em>, <em>periods</em>, <em>period=1</em>, <em>excludedCourses=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.getData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configures course and group ploting</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>year</strong> &#8211; The year whose marks will be plotted</li>
+<li><strong>periods</strong> &#8211; Evaluative period list</li>
+<li><strong>period</strong> &#8211; Current period as int (as index+1 for the list)</li>
+<li><strong>excludedCourses</strong> &#8211; Courses that won&#8217;t generate a plot</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None, it creates the dataframe with the data from the database</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.getGroupPromStats">
+<code class="descname">getGroupPromStats</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.getGroupPromStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates stats about failures in the specified group, for the configured year and period
+[66.66666666666667, 13.333333333333334, 20.0], 2.2666666666666666</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>group</strong> &#8211; name of the group</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">p - a list with the percent of students in each situation (promoting &lt;= 2 susp, risk 3-4 susp, danger &gt; 4 susp) and the average of fails for students</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.lowerThan">
+<code class="descname">lowerThan</code><span class="sig-paren">(</span><em>x</em>, <em>n=5</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.lowerThan" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> &#8211; list with grades (0-10)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the amount of values in the list x that are less than n (default 5)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.mergegroupstatsaskabi">
+<code class="descname">mergegroupstatsaskabi</code><span class="sig-paren">(</span><em>askfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.mergegroupstatsaskabi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.modelo">
+<code class="descname">modelo</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.modelo" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> &#8211; list with course language</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">D for D and AG for A or G</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.modeloBil">
+<code class="descname">modeloBil</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.modeloBil" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> &#8211; list with course language</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">D for D and AGBil or AGPlur for A or G with english program</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.notPassedStats">
+<code class="descname">notPassedStats</code><span class="sig-paren">(</span><em>dfgrades</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.notPassedStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a list returns a dic with the number of not passed subjects and students</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dfgrades</strong> &#8211; a grades series with names as index</td>
+</tr>
+</tbody>
+</table>
+<p>uniquename</p>
+<p>aabadiacaj     0</p>
+<p>aalvardiaz     0</p>
+<p>acarvalper     8</p>
+<p>agarciacha     0</p>
+<p>ajimenemen2    0</p>
+<p>aruedasbal     2</p>
+<p>ausandilor     0
+...</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Return gradescount:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">a dic with the number of not passed subjects and student number</td>
+</tr>
+</tbody>
+</table>
+<p>defaultdict(&lt;class &#8216;int&#8217;&gt;, {0: 10, 1: 5, 2: 5, 3: 3, 4: 1, 5: 2, 6: 1, 8: 3})</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.percent">
+<code class="descname">percent</code><span class="sig-paren">(</span><em>x</em>, <em>n=5</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.percent" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> &#8211; list with grades (0-10)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The % of &gt;=5 marks (from 10) in a list x</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.perioddata">
+<code class="descname">perioddata</code><span class="sig-paren">(</span><em>year</em>, <em>period</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.perioddata" title="Permalink to this definition">¶</a></dt>
+<dd><p>FIXME:this function is never called</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.promcourseplots">
+<code class="descname">promcourseplots</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.promcourseplots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates stacked bar plots of the number of not passed subjects for each course with all the groups on it</p>
+<p>Z    Y     Z</p>
+<p>Y    Y     Y</p>
+<p>X    X     Y</p>
+<p>X    X     X</p>
+<p>X    X     X</p>
+<p>1A   1B   1C</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.removepending">
+<code class="descname">removepending</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.removepending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes pending subjects (the ones wich course is not the students course) from the dataframe</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="notakeb.notak.setWorkDir">
+<code class="descname">setWorkDir</code><span class="sig-paren">(</span><em>wdir</em><span class="sig-paren">)</span><a class="headerlink" href="#notakeb.notak.setWorkDir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="database.html" class="btn btn-neutral float-right" title="database module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to Python Educa’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Asier Urío Larrea.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

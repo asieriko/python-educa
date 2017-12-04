@@ -30,7 +30,10 @@ class notak:
     def __init__(self, db, lang='es', debug=False):
         """
         Initiates the class
+        
         :param db: the sqlite3 db file path
+        :param lang: the language of the generated reports (default es-spanish, other option eu-basque)
+        :param debug: If the program will print debug messages (default False)
         :return: None
         """
         self.db = db
@@ -54,11 +57,12 @@ class notak:
     def getData(self, year, periods, period=1, excludedCourses=[]):
         """
         Configures course and group ploting
+        
         :param year: The year whose marks will be plotted
         :param periods: Evaluative period list
         :param period: Current period as int (as index+1 for the list)
         :param excludedCourses: Courses that won't generate a plot
-        :return:
+        :return: None, it creates the dataframe with the data from the database
         """
         self.year = year
         self.periods = periods
@@ -124,14 +128,16 @@ class notak:
     def generatepending(self):
         """
         Generates a pandas dataframe with pending subjects (the ones not passed from the previous course)
-        :return:
+        
+        :return: None
         """
         self.dfp = df[df.coursename!=df.ycourse]
 
     def removepending(self):
         """
-        Removes pending subjects from the dataframe
-        :return:
+        Removes pending subjects (the ones wich course is not the students course) from the dataframe
+        
+        :return: None
         """
         self.df = self.df[self.df.coursename==self.df.ycourse]
 
@@ -147,24 +153,22 @@ class notak:
 
     def percent(self, x, n=5):
         """
-        Calculates the % of >=5 marks (from 10) in a list x
         :param x: list with grades (0-10)
-        :return:
+        :return: The % of >=5 marks (from 10) in a list x
         """
         return sum(1 for a in x if a >= n) * 100 / len(x) if len(x) != 0 else ''
 
     def lowerThan(self,x,n=5):
-        '''
-        Calculates the amount of values in x that are less than n
+        '''        
         :param x: list with grades (0-10)
-        :return:
+        :return: the amount of values in the list x that are less than n (default 5)
         '''
         return sum(1 for a in x if a < n)
 
     def modelo(self, x):
         """
-        :param x:list with course language
-        :return:D for D and AG for A or G
+        :param x: list with course language
+        :return: D for D and AG for A or G
         """
         if x == 'D':
             return 'D'
@@ -173,8 +177,8 @@ class notak:
 
     def modeloBil(self, x):
         """
-        :param x:list with course language
-        :return:D for D and AGBil or AGPlur for A or G with english program
+        :param x: list with course language
+        :return: D for D and AGBil or AGPlur for A or G with english program
         """
         if x == 'D':
             return 'D'
@@ -191,6 +195,7 @@ class notak:
         Generates a table with the grades for each student and subject
         for the configured year and period
         Only for current year and eb'
+        
         :param group: Name of the group
         """
         return pd.pivot_table(self.df[(self.df.cgroup == group) & (self.df.year == self.year) & (
@@ -201,18 +206,27 @@ class notak:
     def notPassedStats(self,dfgrades):
         """
         From a list returns a dic with the number of not passed subjects and students
+        
         :param dfgrades: a grades series with names as index 
-            niquename
-            aabadiacaj     0
-            aalvardiaz     0
-            acarvalper     8
-            agarciacha     0
-            ajimenemen2    0
-            aruedasbal     2
-            ausandilor     0
-            ...
-        :return: gradescount a dic with the number of not passed subjects and student number
-            defaultdict(<class 'int'>, {0: 10, 1: 5, 2: 5, 3: 3, 4: 1, 5: 2, 6: 1, 8: 3})
+        uniquename
+        
+        aabadiacaj     0
+        
+        aalvardiaz     0
+        
+        acarvalper     8
+        
+        agarciacha     0
+        
+        ajimenemen2    0
+        
+        aruedasbal     2
+        
+        ausandilor     0
+        ...
+        
+        :return gradescount: a dic with the number of not passed subjects and student number
+        defaultdict(<class 'int'>, {0: 10, 1: 5, 2: 5, 3: 3, 4: 1, 5: 2, 6: 1, 8: 3})
         """
         gradescount = defaultdict(int)
         for y in dfgrades:
@@ -232,6 +246,7 @@ class notak:
         '''
         Generates stats about failures in the specified group, for the configured year and period
         [66.66666666666667, 13.333333333333334, 20.0], 2.2666666666666666
+        
         :param group: name of the group
         :return: p - a list with the percent of students in each situation (promoting <= 2 susp, risk 3-4 susp, danger > 4 susp) and the average of fails for students
         '''
@@ -259,10 +274,11 @@ class notak:
     def generatePlot(self,diagram,func,coursegroup):
         '''
         Generates a bar plot from the diagram dataframe
+        
         :param diagram: Dataframe with the data to be ploted
         :param func: it can be the average of the grades (mean) or the percentaje of passed for each subject
         :param coursegroup: only needed to create the filename
-        :return: None, it stores the plot in the filesystem
+        :return figurefile: The name of the stored plot (not the path)
         '''
         gtitle = coursegroup + ' - ' + self.periods[self.period - 1] + " (" + self.year + ") "
         diagram.plot(kind='bar', title=gtitle).legend(loc=4)
@@ -279,6 +295,13 @@ class notak:
         return figurefile
    
     def generatePiePlot(self,missed,name):
+        '''
+        Generates a pie plot from the missed list
+        
+        :param missed: a list with the number of students for each number of not passed subjectcs
+        :param name: the name for the title of the diagram
+        :return: None, it stores the plot in the filesystem
+        '''
         p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
         title= self.studpasstitle[self.langg]
         title2 = self.promttitle[self.langg]
@@ -310,6 +333,7 @@ class notak:
         the last one for all of them for current year and period
         If the period is not the first, plots have a series with the previous period
         All plots have a series with the average of the last "5" years
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -368,6 +392,7 @@ class notak:
         the last one for all of them for current year and period
         If the period is not the first, plots have a series with the previous period
         All plots have a series with the average of the last "5" years
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -428,6 +453,7 @@ class notak:
         This function generates plots for each course with bilingual classess vs The whole course
         the last one for all of them for current year and period
         It only takes the current period
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -472,6 +498,7 @@ class notak:
         This function generates plots for the first course and each original school
         the last one for all of them for current year and period
         It only takes the current period
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -536,6 +563,7 @@ class notak:
         the last one for all of them for current year and period
         If the period is not the first, plots have a series with the previous period
         All plots have a series with the average of the last "5" years
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -615,6 +643,7 @@ class notak:
         """
         This function generates a plot for the group with the grades/pass% of each subject depending on func
         If the period is not the first, plots have a series with the previous period
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -661,6 +690,7 @@ class notak:
         """
         This function generates a plot for each group with the grades/pass% of each subject depending on func
         If the period is not the first, plots have a series with the previous period
+        
         :param func: The function to use for aggregating grades, either np.mean or self.percent
         :return:
         """
@@ -705,6 +735,7 @@ class notak:
         """
         This function generates a plot for each group: 0-2 not passed, 3-4 and 5 or more
         for current year and period
+        
         :return:creates plots with 2 subplots, the first one an histogram with the number of students with X not passed
         subjects, and another pie diagrm with promotion information (0-2,3-4,>4)
         Also returns a dic with groups as keys and [number of not passed subjects, number of studengs with all passed,
@@ -716,10 +747,13 @@ class notak:
             
     def generatePiedata(self,missed):
         '''
-        :param missed:
-        :param coursegroup:
-        :param lang:
-        :return :
+        :param missed: a list with the number of students for each number of not passed subjectcs
+        :return p: a list with 3 values, number of students with <=2 not passed subjects, number of students with 3-4 not passed subjects, number of students with >=4 not passed subjects
+        :return prom: a list with the number of students with 0-1-2 not passed subjects
+        :return risk: a list with the number of students with 3-4 not passed subjects
+        :return danger: a list with the number of students with 5-6... not passed subjects
+        :return left: a list for with the x coordinates of the diagram bar
+        :return legendhist: a list with the number of not passed subjects as legend for the diagram bar
         '''
         mmissed = np.max([int(k) for k in missed.keys()])
         if mmissed < 5: mmissed = 5
@@ -1139,6 +1173,12 @@ class notak:
         '''
         generates html with a table for the students with subjects and his marks side by side with all group marks
         studentgroupgrades is a DataFrame with those marks
+        
+        :param student: uniquename of the student
+        :param fullname: The name of the studetns to use as title for the diagrams and filename
+        :param groupgrades: the grades of the group of the student to create a comparative diagram
+        :param doc: a textdoc() object to append the report of the student (default False)
+        :return html: html code with the report of the student (grades)
         '''
         #FIXME: subject is in basque
         if self.debug:
@@ -1189,11 +1229,17 @@ class notak:
     def promcourseplots(self,period):
         '''
         Generates stacked bar plots of the number of not passed subjects for each course with all the groups on it
+        
         Z    Y     Z
+        
         Y    Y     Y
+        
         X    X     Y
+        
         X    X     X        
+        
         X    X     X
+        
         1A   1B   1C
         '''
         l=("0","1-2","3-4",">=5")                    

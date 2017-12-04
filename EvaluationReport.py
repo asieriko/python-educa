@@ -222,7 +222,7 @@ def coursePage(coursename,data,lang):
     img = Image(href=href, type="simple", show="embed", actuate="onLoad")
     f.addElement(img)
 
-  for courselang in ['AG','D']:#data.keys():
+  for courselang in data.keys():
      coursetitle = H(stylename=h2style,text=coursename+"-"+courselang,outlinelevel=2)
      textdoc.text.addElement(coursetitle)
      blankline = P(text="")
@@ -288,12 +288,12 @@ td=tutors()
 
 
 
-coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E'], 'D':['1.H', '1.I',  '1.J','1. K','1.L']}, 
-                 '2º PMAR': {'AG':['2º P'],'D':['2º P']},           
-                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2. K']},
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E'], 'D':['1.H', '1.I',  '1.J','1.K','1.L']}, 
+                 '2º PMAR': {'AG':['2º P']},           
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2.K']},
                  '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J']},
                  '4 ESO': {'AG':['4º A','4º B','4º C'], 'D':['4.H', '4.I',  '4.J','4.K']},
-                 '3º PMAR': {'AG':['3º D'], 'D':['3.D']},
+                 '3º PMAR': {'AG':['3º D']},
                  '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
                  '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
                  })
@@ -304,8 +304,20 @@ courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2�
 
 for k in courses:
   coursePage(k,coursegroups[k],lang)
-  
-  
+
+title = H(stylename=h1style,text="Promoción",outlinelevel=1)  
+textdoc.text.addElement(title)
+for k in courses:
+     p = P()
+     textdoc.text.addElement(p)
+     img_path = path + k + "-allgroupsprom.png"
+     href = textdoc.addPicture(img_path)
+     f = Frame(name=k, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
+     p.addElement(f)
+     img = Image(href=href, type="simple", show="embed", actuate="onLoad")
+     f.addElement(img)
+
+    
 textdoc.save("report-"+period+year+"-"+lang+".odt")  
 
 #coursegroups = OrderedDict({ '1. DBH LOMCE': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 

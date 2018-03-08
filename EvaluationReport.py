@@ -77,7 +77,7 @@ textdoc.styles.addElement(tablecontentscenterred)
 
 lang="eu"
 year="2017-2018"
-period="1. Ebaluazioa"
+period="2. Ebaluazioa"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -243,7 +243,7 @@ def coursePage(coursename,data,lang):
 
 def ikasgaiak():
     ikasgai = {}
-    with open("ikasgaiakitzulita.csv", 'r', encoding="UTF-8") as results:
+    with open("data/ikasgaiakitzulita.csv", 'r', encoding="UTF-8") as results:
      reader = csv.reader(results, delimiter=";")
      for row in reader:
        ikasgai[row[0]] = row[1]
@@ -271,7 +271,7 @@ def tutors():
 
 ikasgai=ikasgaiak()
 td = ''
-td=tutors()  
+#td=tutors()  
 
 
 #print(td["3º A"])
@@ -299,7 +299,7 @@ coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1
                  })
 
 courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
-
+courses = ['2º Bach.']
 
 
 for k in courses:

@@ -51,7 +51,21 @@ class notak:
         self.avg= {'eu':'BB','es':'Prom'}
         self.avg5 = {'eu':'BB5u','es':'Prom5a'}
         self.langt = {'eu':'Eredu-maila','es':'Modelo-nivel'}
+        
+        
+        self.summary = {'eu':" Taldeko emaitzak",'es':"Resumen del grupo"}
+        self.gresults = {'eu':"Taldeko emaitzak",'es':"Resultados del grupo"}
+        self.notpas = {'eu':"Ikasleen suspentso kopurua eta notaren Batazbestekoa",'es':"Número de suspensos y nota media de los alumnos"}
+        self.average = {'eu':"Batazbestekoa",'es':"Promedio"}
+        self.paspercent = {'eu':"Gaindituen ehunekoak",'es':"Porcentajes de aprobados"}
+        self.more70 = {'eu':"ehuneko 70 baino gainditu gutxiago duten ikasgaiak",'es':"Asignaturas con menos del 70 por ciento de aprobados"}
+        self.sresults = {'eu':"Ikasleen emaitzak",'es':"Resultados de los alumnos"}
+         
+        self.header = "/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png"
+        self.footer = ""
+        
         html = ""
+        
 
 
     def getData(self, year, periods, period=1, excludedCourses=[]):
@@ -93,6 +107,8 @@ class notak:
            print(self.df.head())
         sqlsubjects = "SELECT * FROM subjects WHERE " + "NOT course = '" + ("' AND NOT course = '").join(
             excludedCourses) + "'"
+        if self.debug:
+           print(sqlsubjects)
         dfsubjects = pd.read_sql(sqlsubjects,con)
         dfsubjects.sort_values('id',inplace=True)
         dfsubjects.drop_duplicates(subset='code',keep='last',inplace=True) #FIXME: Not sure if it gets the last \
@@ -345,7 +361,9 @@ class notak:
                 lang='All'
             for course in dflang[dflang.year == self.year].course.unique():#FIXME: Change in other functions coursename for course. Coursename has LOMCE, course not
                 if self.debug:
-                   print(self.year, course)
+                   print(self.year, course,dflang[dflang.year == self.year].course.unique())
+                if course == pd.np.nan:
+                    continue
                 coursedf = dflang[dflang['course'] == course]
                 courseyearebspivot = pd.pivot_table(coursedf, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"],aggfunc=func)
                 #Remove subjects that are not in the current period/course
@@ -572,7 +590,7 @@ class notak:
             if dept == None or str(dept) == 'nan':
                 continue
             doc = td.textdoc()
-            doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
+            doc.addImageHeaderFooter(self.header,self.footer)
             print(dept)
             dept = str(dept)
             doc.addTitle("Departamento: " + dept)
@@ -791,7 +809,7 @@ class notak:
         missed = self.notPassedStats(pt.grade)
         p,prom,riesgo,peligro, left,legendhist = self.generatePiedata(missed)
         if self.debug:
-           print(self.generatePiedata(missed))
+           print(p,prom,riesgo,peligro, left,legendhist)
 
     def generateCourseStatsPlots(self):
         """
@@ -817,6 +835,7 @@ class notak:
                 dflang.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                                   aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
+                print(course,lang,missed)
                 self.generatePiePlot(missed,course+"-"+lang)
                 #FIXME:Test and delete
                 #title = self.studpasstitle[self.langg]
@@ -902,8 +921,8 @@ class notak:
         return allg
 
 
-    def generateYearsAllGoodSubjects(self,period,percentaje,years=None):
-        years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016','2016-2017']
+    def generateYearsAllGoodSubjects(self,period,percentaje=70,years=None):
+        years=['2007-2008','2008-2009','2009-2010','2010-2011','2011-2012','2012-2013','2013-2014','2014-2015','2015-2016','2016-2017','2017-2018']
         good = []
         for year in years:
             passpercent = pd.pivot_table(self.df[(self.df['period']==period) & (self.df['year']==year)], index=["subject"], values=["grade"],margins=True,aggfunc=self.percent).fillna('')
@@ -913,9 +932,11 @@ class notak:
             good.append(pergood)
         return list(zip(years,good))
 
+ 
+
     def generatePassPercent(self,period,year,group = None,percentaje = 70):
         '''
-        generates CSV files whit information about subjects and its passin %
+        generates CSV files whit information about subjects and its passing %
         '''
         if group:
             framefilter = (self.df['period']==period) & (self.df['year']==year) & (self.df['cgroup']==group)
@@ -1015,23 +1036,25 @@ class notak:
                 ghtml = ""
                 if doc:
                     doc = td.textdoc()
-                    doc.addImageHeaderFooter("/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png","")
-                    doc.addTitle("Resumen del grupo: " +group)
-                    doc.addTitle2("Taldeko emaitzak/Resultados del grupo",False)
-                    doc.addTitle3("Promozioa/Promoción")
+                    doc.addImageHeaderFooter(self.header,self.footer)
+                    doc.addTitle(self.summary[self.langg] + " " + group)
+                    doc.addTitle2(self.gresults[self.langg],True)
+                    doc.addTitle3(self.promttitle[self.langg],False)
                     doc.addImage(self.workdir+pie,group+" promotion")
-                    doc.addTitle3("Ikasleen suspentso kopurua eta notaren Batazbestekoa / Número de suspensos y nota media de los alumnos")
+                    doc.addTitle3(self.average[self.langg])
+                    doc.addImage(self.workdir+mean,group+" average grades")
+                    doc.addTitle3(self.paspercent[self.langg])
+                    doc.addImage(self.workdir+percent,group+" subjects pass percent")
+                    doc.addTitle3(self.more70[self.langg])
+                    if not badsubjectsgroup.empty:
+                        bsg = badsubjectsgroup.set_index("name_" + self.langg,drop=True)#("name_"+self.langg+"",drop=True)
+                        bsg.round({'%':2}) #does not work
+                        doc.addTable(bsg.reset_index().values,["name_" + self.langg]+list(badsubjectsgroup.columns[1:]))
+                    
+                    doc.addTitle2(self.sresults[self.langg],True)
+                    doc.addTitle3(self.notpas[self.langg])
                     snp = studentsnotpasses.set_index("fullname",drop=True)
                     doc.addTable(snp.reset_index().values,["Student"]+list(studentsnotpasses.columns[1:]))
-                    doc.addTitle3("Batazbestekoa/Promedio")
-                    doc.addImage(self.workdir+mean,group+" average grades")
-                    doc.addTitle3("Gaindituen ehunekoak/Porcentajes de aprobados")
-                    doc.addImage(self.workdir+percent,group+" subjects pass percent")
-                    doc.addTitle3("ehuneko 70 baino gainditu gutxiago duten ikasgaiak/Asignaturas con menos del 70 por ciento de aprobados")
-                    if not badsubjectsgroup.empty:
-                        bsg = badsubjectsgroup.set_index("subject",drop=True)
-                        doc.addTable(bsg.reset_index().values,["Subject"]+list(badsubjectsgroup.columns[1:]))
-                    doc.addTitle2("Ikasleen emaitzak/Resultados de los alumnos",True)
                 else:
                     doc = False
                 for studentid in sorted(students): #FIXME: This sorts by uniquename, better fullname
@@ -1100,7 +1123,7 @@ class notak:
                 f.close()
                 if doc:
                     self.createDir(self.workdir + "/groups")
-                    doc.save(self.workdir + "/groups/" + group + ".odt")  #FIXME: os.path.join
+                    doc.save(self.workdir + "/groups/" + group + "_" + self.langg + ".odt")  #FIXME: os.path.join
 
     def generateStatsCourse(self, year, ebals, mod=None, course=None):
         if self.debug:
@@ -1145,14 +1168,14 @@ class notak:
         if self.debug:
            print("Eredua: ",lang)
         students = self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.cgroup == group)].uniquename.unique()
-        groupgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+        groupgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["name_" + self.langg],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
         groupgrades.unstack()
         groupgrades.reset_index(level=0, inplace=True)
-        subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["subject"],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
+        subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["name_" + self.langg],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
         badsubjectsgroup = subjectsgrouppt[subjectsgrouppt.grade<70] #FIXME: 70 hardcoded
         badsubjectsgroup.unstack()
         badsubjectsgroup.reset_index(level=0,inplace=True)
-        badsubjectsgroup.columns=["subject","%"]
+        badsubjectsgroup.columns=["name_" + self.langg,"%"]
         studentsnotpasses = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["uniquename"],values=["grade"],aggfunc=[self.lowerThan,np.mean]).fillna('')
         studentsnotpasses.unstack()
         studentsnotpasses.reset_index(level=0,inplace=True)
@@ -1174,6 +1197,8 @@ class notak:
         generates html with a table for the students with subjects and his marks side by side with all group marks
         studentgroupgrades is a DataFrame with those marks
         
+        TODO:change subject with "name_"+self.langg
+        
         :param student: uniquename of the student
         :param fullname: The name of the studetns to use as title for the diagrams and filename
         :param groupgrades: the grades of the group of the student to create a comparative diagram
@@ -1183,17 +1208,17 @@ class notak:
         #FIXME: subject is in basque
         if self.debug:
            print(student)
-        studentgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.uniquename == student)],index=["subject"],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+        studentgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.uniquename == student)],index=["name_" + self.langg],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
         studentgrades.unstack()
         studentgrades.reset_index(level=0, inplace=True)
-        studentgroupgrades = pd.merge(studentgrades,groupgrades,on="subject")
-        studentgroupgrades.columns = ['subject', student,'course']
-        dfs = self.df[["subject","abv_"+self.langg]]
-        dfs.drop_duplicates(subset='subject',keep='last',inplace=True)
-        studentgroupgrades = pd.merge(studentgroupgrades,dfs,on="subject")#FIXME: I'm trying to have the abreviations in the plot and text in the table. IF it works abv_es has to be considered
-        studentgroupgrades.drop('subject', axis=1, inplace=True)
-        studentgroupgrades.columns = [fullname,'course','subject']
-        studentgroupgrades = studentgroupgrades[['subject',fullname,'course']]
+        studentgroupgrades = pd.merge(studentgrades,groupgrades,on="name_" + self.langg)
+        studentgroupgrades.columns = ["name_" + self.langg, student,'course']
+        dfs = self.df[["name_" + self.langg,"abv_"+self.langg]]
+        dfs.drop_duplicates(subset="name_" + self.langg,keep='last',inplace=True)
+        studentgroupgrades = pd.merge(studentgroupgrades,dfs,on="name_" + self.langg)#FIXME: I'm trying to have the abreviations in the plot and text in the table. IF it works abv_es has to be considered
+        studentgroupgrades.drop("name_" + self.langg, axis=1, inplace=True)
+        studentgroupgrades.columns = [fullname,'course',"name_" + self.langg]
+        studentgroupgrades = studentgroupgrades[["name_" + self.langg,fullname,'course']]
         
         if self.debug:
            print(studentgroupgrades)
@@ -1201,15 +1226,19 @@ class notak:
         self.createDir(self.workdir + group)
         fname = group + "/" + self.year + "-" + self.periods[self.period-1] + "-" + student + ".png" #to use self.workdir + group + "/" + we need to create group dir first self.createDir(self.workdir + group)
         plt.clf()
-        studentgroupgrades.plot(kind="bar",x=studentgroupgrades.subject)
+        studentgroupgrades.plot(kind="bar",x=studentgroupgrades["name_" + self.langg])
         plt.ylim(0, 10)
         plt.axhline(5)
         plt.savefig(self.workdir + fname, format="png")
         plt.close()
         if doc:
             doc.addTitle3(fullname,True)
-            studentgradesdoc = studentgrades.set_index("subject",drop=True)
-            doc.addTable(studentgradesdoc.reset_index().values,["Subject"]+list(studentgradesdoc.columns))
+            studentgrades = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1]) & (self.df.uniquename == student)],index=["name_"+self.langg+""],values=["grade"],margins=True,aggfunc=np.mean).fillna('')
+            studentgrades.unstack()
+            studentgrades.reset_index(level=0, inplace=True)
+                        
+            studentgradesdoc = studentgrades.set_index("name_"+self.langg,drop=True)
+            doc.addTable(studentgradesdoc.reset_index().values,["name_"+self.langg]+list(studentgradesdoc.columns))
             doc.addImage(self.workdir+fname,fullname+" grades")
         html = '''
         <div class="student">
@@ -1311,7 +1340,8 @@ class notak:
                 return "EzKonforme"
         
         def konfikas(row):
-            print(row['badsubjs'],row['badsubjs']<40)
+            if self.debug == True:
+                print(row['badsubjs'],row['badsubjs']<40)
             if row['badsubjs']<40:
                 return "Konforme"
             else:
@@ -1421,3 +1451,19 @@ if __name__ == "__main__":
     #n.setWorkDir("2. Ebaluazioa2016-2017")
     #n.getData(year, ebaluaketak, 2, baliogabekokurtsoak)
     #n.generateCourseBilvsCooursePlots(n.percent)
+
+
+#import notakeb as notak
+#db = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
+#ebaluaketak = ['1. Ebaluazioa', '2. Ebaluazioa', '3. Ebaluazioa', 'Azken Ebaluazioa', 'Ohiz kanpoko Ebaluazioa','Final']
+#ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA",'Programa de Currículo Adaptado LOMCE']
+#divpmar=["3º Div.Cur.","4º Div. Cur.","3º PMAR"]
+#batx=["1. Batxilergoa LOE","2. Batxilergoa LOE"]
+#dbh=["2. DBH","1. DBH","3. DBH","4. DBH"]
+#baliogabekokurtsoak = ucepca
+#year = "2017-2018"
+#lang = 'es'
+#n = notak.notak(db,lang)
+#n.setWorkDir("test")
+#n.getData(year, ebaluaketak, 6, baliogabekokurtsoak)
+#n.generateCourseStatsEvolutionPlots()

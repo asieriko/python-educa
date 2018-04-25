@@ -2,6 +2,18 @@
 data/
 notsure/
 oldPython/
+sql/
+.directory
+.odt
+.project
+.pydevproject
+odf/
+*.odt
+*.ods
+*.csv
+*.db
+*Ebaluazioa20*/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

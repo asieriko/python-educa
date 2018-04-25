@@ -7,7 +7,7 @@ class Ui(QtWidgets.QMainWindow):
     
     def __init__(self):
         super(Ui, self).__init__()
-        self.ui = uic.loadUi('geteducadata.ui', self)
+        self.ui = uic.loadUi('ui/geteducadata.ui', self)
         self.ui.browsefileb.clicked.connect(self.opencsvdir)
         self.ui.queryb.clicked.connect(self.query)
         self.outcsv = ""

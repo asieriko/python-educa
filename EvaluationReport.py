@@ -75,7 +75,7 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="eu"
+lang="es"
 year="2017-2018"
 period="2. Ebaluazioa"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
@@ -271,10 +271,10 @@ def tutors():
 
 ikasgai=ikasgaiak()
 td = ''
-#td=tutors()  
+td=tutors()  
 
 
-#print(td["3º A"])
+print(td["3º A"])
 
 #coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I',  '1J','1L']}, 
                  #'2º PMAR': {'AG':['2P'],'D':['2P']},           
@@ -299,7 +299,7 @@ coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1
                  })
 
 courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
-courses = ['2º Bach.']
+#courses = ['2º Bach.']
 
 
 for k in courses:

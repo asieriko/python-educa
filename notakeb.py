@@ -38,6 +38,7 @@ class notak:
         """
         self.db = db
         self.debug=debug
+        self.td = ''
         self.periods = []
         self.workdir = ""
         self.year = ""
@@ -60,6 +61,7 @@ class notak:
         self.paspercent = {'eu':"Gaindituen ehunekoak",'es':"Porcentajes de aprobados"}
         self.more70 = {'eu':"ehuneko 70 baino gainditu gutxiago duten ikasgaiak",'es':"Asignaturas con menos del 70 por ciento de aprobados"}
         self.sresults = {'eu':"Ikasleen emaitzak",'es':"Resultados de los alumnos"}
+        self.groupstats = {'eu':"Taldearen adierazleak",'es':"Indicadores del grupo"}
          
         self.header = "/home/asier/Hezkuntza/SGCC/PR04 Gestion documental/Plantillas - Logos - Encabezados/membrete.png"
         self.footer = ""
@@ -1051,6 +1053,74 @@ class notak:
                         bsg.round({'%':2}) #does not work
                         doc.addTable(bsg.reset_index().values,["name_" + self.langg]+list(badsubjectsgroup.columns[1:]))
                     
+                    #TODO askabi and group data
+                    #in 1013 +/- self.td = self.getTutorsData()
+                    self.td = self.getTutorsData() #FIXME it does not work if askabi's data is not present!
+                    self.translation = {'group': {'eu': 'Taldea','es':'Grupo'},
+               'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
+               'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
+               'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
+               'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
+               'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
+               'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
+               'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumnado que promociona'},
+               'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
+               'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
+               'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
+               'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
+               'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
+               'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
+               'part': {'eu' : 'Atala', 'es': 'Apartado' },
+               'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
+               'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
+               'Konforme': {'eu': 'Ados','es':'Conforme'}}
+                    if self.td != '':
+                        table = td.Table()
+                        table.addElement(td.TableColumn(numbercolumnsrepeated=2))
+                        headers=[self.translation['part'][self.langg],'2 ' + self.translation['period'][self.langg]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
+                        tr = td.TableRow()
+                        table.addElement(tr)
+                        for val in headers:
+                            tc = td.TableCell(stylename="Table")
+                            tr.addElement(tc)
+                            p = td.P(stylename=doc.tableheaders,text=val)
+                            tc.addElement(p)
+                        import re #names in EDUCA and ASKABI are different
+                        g = re.sub(r"[ \.º]", "", group)
+                        g = re.sub(r'Bach2|Batx2', '6', g)
+                        g = re.sub(r'Bach1|Batx1', '5', g)
+                        print(g)
+                    
+                        f = self.td[g]
+                        for line in f:
+                            if "group" in line: #FIXME: If not all group tables contain a row with the group name (also in text header...)
+                                continue
+                            tr = td.TableRow()
+                            table.addElement(tr)
+                            for i,val in enumerate(line):
+                                if i==0:
+                                    tc = td.TableCell(stylename="Table")
+                                    tr.addElement(tc)
+                                    p = td.P(stylename=doc.tablecontents,text=self.translation[val][self.langg])
+                                elif val=="EzKonforme":
+                                    tc = td.TableCell(stylename="Table")
+                                    tr.addElement(tc)
+                                    p = td.P(stylename=doc.tablecontentscenterred,text=self.translation[val][self.langg])
+                                elif val=="Konforme":
+                                    tc = td.TableCell(stylename="Table")
+                                    tr.addElement(tc)
+                                    p = td.P(stylename=doc.tablecontentscenter,text=self.translation[val][self.langg])
+                                else:
+                                    tc = td.TableCell(stylename="Table")
+                                    tr.addElement(tc)	   
+                                    p = td.P(stylename=doc.tablecontentscenter,text=val)
+                                tc.addElement(p)
+
+                        doc.addTitle3(self.groupstats[self.langg],True)
+                        doc.textdoc.text.addElement(table)
+                    
+                    #ENDTODO
+                    
                     doc.addTitle2(self.sresults[self.langg],True)
                     doc.addTitle3(self.notpas[self.langg])
                     snp = studentsnotpasses.set_index("fullname",drop=True)
@@ -1351,7 +1421,7 @@ class notak:
             return float(row[col])*100/int(row['total'])
         
         gst = pd.read_csv(self.workdir+"/groupstats.csv")
-        gst.replace({'\.{1}': '','º':'',' ':''}, regex=True,inplace=True)
+        gst.replace({'\.{1}': '','º':'',' ':''}, regex=True,inplace=True) #names in EDUCA and ASKABI are different
         gst.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
         gst["Danger5"] = gst.apply (lambda row: topercent(row,'Danger5'),axis=1)
         gst["promoting"] = gst.apply (lambda row: topercent(row,'promoting'),axis=1)
@@ -1386,6 +1456,24 @@ class notak:
                 
         return alld
     
+    def getTutorsData(self):
+        df = pd.read_csv(self.workdir+"/reportgruoupdata.csv",sep=",")
+        taldeak = df.group.unique()
+        zutabeak = ['id','group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
+        columns_drop = ['risk34','total','eba']
+        df.drop(columns_drop, axis=1, inplace=True)
+        df.fillna('',inplace=True)
+        tdata = {}
+        for t in taldeak:
+            dfn = df[df.group==t]
+            l=[]
+            for column in dfn:
+                a=dfn[column].tolist()
+                a.insert(0,column)
+                l.append(a)
+            tdata[t] = l[1:]
+        return tdata
+    
 if __name__ == "__main__":
     #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"
     db = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/mendillorriN.db"
@@ -1397,12 +1485,13 @@ if __name__ == "__main__":
     baliogabekokurtsoak = ucepca
     #files = ["/home/asier/Hezkuntza/SGCC-Erregistroak-15-16/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluación/1º Ev/Sabanas 2º Bach 27-11/1ev-2bach.csv"]
     #n.insertdataDB(files)
-    year = "2015-2016"
+    year = "2017-2018"
     for lang in ['eu','es']:
       n = notak(db,lang)
-      n.setWorkDir("ebaluaketa1516")
-      n.getData(year, ebaluaketak, 6, baliogabekokurtsoak)
+      n.setWorkDir("ebaluaketa1718")
+      n.getData(year, ebaluaketak, 2, baliogabekokurtsoak)
       n.generateFinalGrade()
+      n.generateYearsAllGoodSubjects(ebaluaketak[1])
       #n.removepending()
       #print("course np.mean")
       #n.generateCoursePlots(np.mean)
@@ -1467,3 +1556,7 @@ if __name__ == "__main__":
 #n.setWorkDir("test")
 #n.getData(year, ebaluaketak, 6, baliogabekokurtsoak)
 #n.generateCourseStatsEvolutionPlots()
+#g = re.sub(r"[ \.º]", "", group)
+#g = re.sub(r'Bach2|Batx2', '6', g)
+#g = re.sub(r'Bach1|Batx1', '5', g)
+#print(g)

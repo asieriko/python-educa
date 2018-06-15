@@ -77,7 +77,8 @@ textdoc.styles.addElement(tablecontentscenterred)
 
 lang="es"
 year="2017-2018"
-period="2. Ebaluazioa"
+period="Azken Ebaluazioa"
+#period="3. Ebaluazioa"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -271,10 +272,10 @@ def tutors():
 
 ikasgai=ikasgaiak()
 td = ''
-td=tutors()  
+#td=tutors()  
 
 
-print(td["3º A"])
+#print(td["3º A"])
 
 #coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I',  '1J','1L']}, 
                  #'2º PMAR': {'AG':['2P'],'D':['2P']},           

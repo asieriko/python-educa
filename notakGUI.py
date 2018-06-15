@@ -40,6 +40,8 @@ class Ui(QtWidgets.QMainWindow):
         self.ui.updateDataB.clicked.connect(self.updatedata)
         self.ui.runB.clicked.connect(self.run)
         self.newYearCB.clicked.connect(self.newyear)
+        self.cbEs.stateChanged.connect(self.enableEs)
+        self.cbEu.stateChanged.connect(self.enableEu)
         self.outcsv = ""
         self.show()
         self.n = ''
@@ -92,6 +94,64 @@ class Ui(QtWidgets.QMainWindow):
                 print("An error ocurred")
                 QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to get new year's data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
         self.ui.yearCB.addItem(year) #Fixme: Insert in order
+    
+    @QtCore.pyqtSlot()
+    def enableEs(self):
+        if self.cbEs.isChecked() == True:
+            self.ui.coursePlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.groupStatsPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.allGroupStatsPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.passPercentEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.allGroupPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.promCoursePlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.bilingualCoursePlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.courseStatsPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.allStatsPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.allStatsStudentsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.deptarmentPlotsEs.setCheckState(QtCore.Qt.Checked)
+            self.ui.primarySchoolsPlotsEs.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.ui.coursePlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.groupStatsPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allGroupStatsPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.passPercentEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allGroupPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.promCoursePlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.bilingualCoursePlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.courseStatsPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allStatsPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allStatsStudentsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.deptarmentPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.primarySchoolsPlotsEs.setCheckState(QtCore.Qt.Unchecked)
+
+    @QtCore.pyqtSlot()
+    def enableEu(self):
+        if self.cbEu.isChecked() == True:
+            self.ui.coursePlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.groupStatsPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.allGroupStatsPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.passPercentEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.allGroupPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.promCoursePlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.bilingualCoursePlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.courseStatsPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.allStatsPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.allStatsStudentsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.deptarmentPlotsEu.setCheckState(QtCore.Qt.Checked)
+            self.ui.primarySchoolsPlotsEu.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.ui.coursePlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.groupStatsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allGroupStatsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.passPercentEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allGroupPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.promCoursePlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.bilingualCoursePlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.courseStatsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allStatsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.allStatsStudentsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.deptarmentPlotsEu.setCheckState(QtCore.Qt.Unchecked)
+            self.ui.primarySchoolsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
 
     @QtCore.pyqtSlot()
     def run(self):
@@ -151,7 +211,7 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllGroupPlots(np.mean)
                 print("All group plots n.percent")
                 self.n.generateAllGroupPlots(self.n.percent)
-            if self.ui.allGroupPlotsEs.isChecked() and lang == 'eu':
+            if self.ui.allGroupPlotsEu.isChecked() and lang == 'eu':
                 print("All group plots np.mean")
                 self.n.generateAllGroupPlots(np.mean)
                 print("All group plots n.percent")
@@ -180,6 +240,10 @@ class Ui(QtWidgets.QMainWindow):
             if self.ui.allStatsPlotsEu.isChecked() and lang == 'eu':    
                 print("generate All Stats Plots")
                 self.n.generateAllStatsPlots()
+                
+            print("generate reportgruoupdata.csv")
+            self.n.mergegroupstatsaskabi()    
+                
             if self.ui.allStatsStudentsEs.isChecked() and lang == 'es':
                 print("generate Stats Student")
                 self.n.generateStatsAllStudents(doc=True)

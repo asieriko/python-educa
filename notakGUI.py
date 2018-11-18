@@ -162,14 +162,19 @@ class Ui(QtWidgets.QMainWindow):
         print(ebaluaketak,year,eb,ebn)
         ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
         dbhb=["1 ESO","2 ESO","3 ESO","4 ESO","1º Bach","1. DBH","2. DBH","3. DBH","4. DBH","3º Div.Cur.","4º Div.Cur.","4º Div. Cur.","1. Batxilergoa LOE","1. DBH LOMCE","1. Batxilergoa LOMCE","3. DBH LOMCE","3. Ikaskuntza eta Errendimendua Hobetzeko Programak","2. DBH LOMCE","4. DBH LOMCE","2. Ikaskuntza eta Errendimendua Hobetzeko Programak"]#,"2. Batxilergoa LOMCE",
-        baliogabekokurtsoak = ucepca#+dbhb #+dbhb para solo 2bach
+        baliogabekokurtsoak = ucepca+dbhb #+dbhb para solo 2bach
         for lang in ['eu','es']:
             self.n = notak.notak(self.db,lang,debug=False)
-            self.n.setWorkDir(eb+year)
+            self.n.setWorkDir(eb+year)            
+            self.n.getData(year, ebaluaketak, ebn+1, baliogabekokurtsoak)
             if eb == 'Final':
                 self.n.generateFinalGrade()
-            self.n.getData(year, ebaluaketak, ebn+1, baliogabekokurtsoak)
-
+            
+            mailak = self.n.df[self.n.df.year == year].course.unique()
+            print("Course Pass Percentes")
+            for m in mailak:
+                self.n.generateCoursePassPercent(ebaluaketak[ebn],self.n.year,m)
+            
             if self.ui.coursePlotsEs.isChecked() and lang == 'es':
                 print("course np.mean")
                 self.n.generateCoursePlots(np.mean)
@@ -224,10 +229,12 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.promcourseplots(ebaluaketak[ebn])    
             if self.ui.bilingualCoursePlotsEs.isChecked() and lang == 'es':
                 print("Bilingual plots")
-                self.n.generateCourseBilvsCooursePlots(np.mean)
+                self.n.generateCourseBilPlots([np.mean,self.n.percent])
+                self.n.generateCourseBilvsCooursePlots([np.mean,self.n.percent])
             if self.ui.bilingualCoursePlotsEu.isChecked() and lang == 'eu':
                 print("Bilingual plots")
-                self.n.generateCourseBilvsCooursePlots(np.mean)   
+                self.n.generateCourseBilPlots([np.mean,self.n.percent])
+                self.n.generateCourseBilvsCooursePlots([np.mean,self.n.percent])   
             if self.ui.courseStatsPlotsEs.isChecked() and lang == 'es':    
                 print("Course stats plots")
                 self.n.generateCourseStatsPlots()
@@ -242,7 +249,7 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllStatsPlots()
                 
             print("generate reportgruoupdata.csv")
-            self.n.mergegroupstatsaskabi()    
+            #self.n.mergegroupstatsaskabi()    
                 
             if self.ui.allStatsStudentsEs.isChecked() and lang == 'es':
                 print("generate Stats Student")
@@ -265,6 +272,7 @@ class Ui(QtWidgets.QMainWindow):
     
         print("Mix askabi and EDUCA for the report")
         self.n.mergegroupstatsaskabi()    
+        print("End of generation")
     
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

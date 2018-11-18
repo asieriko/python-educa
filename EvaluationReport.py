@@ -14,6 +14,7 @@ from odf.table import Table, TableColumn, TableRow, TableCell
 import csv
 import pandas as pd
 from collections import OrderedDict
+import numbers
 
 textdoc = OpenDocumentText()
 #pl = PageLayout(name="pagelayout")
@@ -75,10 +76,11 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="es"
+lang="eu"
 year="2017-2018"
-period="Azken Ebaluazioa"
+#period="Azken Ebaluazioa"
 #period="3. Ebaluazioa"
+period = "Final"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -139,7 +141,15 @@ def groupPage(group,lang):
         p = P(stylename=tableheaders,text=val)
         tc.addElement(p)
     #f = [["garbitasuna",3,6],["materiala",6,8],["Adostasuna", "Ez konforme","konforme"],["Harremanak1",7,8],["Harremanak2",6,7],["Adostasuna", "konforme","konforme"]]
-    f = td[group]
+    g = group.replace(". ", "")
+    g = g.replace("º ", "")
+    g = g.replace(".", "")
+    g = g.replace("º", "")
+    g = g.replace("Bach1", "5")
+    g = g.replace("Bach2", "6")
+    g = g.replace("Batx1", "5")
+    g = g.replace("Batx2", "6")
+    f = td[g]
     for line in f:
         if "group" in line: #FIXME: If not all group tables contain a row with the group name (also in text header...)
             continue
@@ -160,7 +170,9 @@ def groupPage(group,lang):
                 p = P(stylename=tablecontentscenter,text=translation[val][lang])
             else:
                 tc = TableCell(stylename="Table")
-                tr.addElement(tc)	   
+                tr.addElement(tc)	  
+                if isinstance(val, numbers.Number):
+                    val = round(val,1)
                 p = P(stylename=tablecontentscenter,text=val)
             tc.addElement(p)
 
@@ -213,6 +225,7 @@ def coursePage(coursename,data,lang):
   blankline = P(text="")
   textdoc.text.addElement(blankline)    
   
+    
   for diagramtype in [pie,percent]:
     p = P()
     textdoc.text.addElement(p)
@@ -222,6 +235,34 @@ def coursePage(coursename,data,lang):
     p.addElement(f)
     img = Image(href=href, type="simple", show="embed", actuate="onLoad")
     f.addElement(img)
+
+  
+  
+  if lang=="eu":
+    subjectsp = P(text="%70 baino gainditu gutxiago duten ikasgaiak:")
+  else:
+    subjectsp = P(text="Asignaturas con menos del %70 de aprobados:")
+  textdoc.text.addElement(subjectsp)
+  blankline = P(text="")
+  textdoc.text.addElement(blankline)
+  textList = List(stylename="L1")
+  
+  
+  file = path+"ehunekoak-"+period+"-"+year+"-"+coursename+"None.csv"
+  with open(file, 'r', encoding="UTF-8") as results:
+     reader = csv.reader(results)
+     headers = next(reader, None)  # get first row with headers
+     for row in reader:
+       if float(row[1]) < 70 and row[0]!= "All":
+         item = ListItem()
+         if lang=="eu":
+            item.addElement(P(text=row[0]+": "+"{:.2f}".format(float(row[1])) +"%"))
+         else:
+            item.addElement(P(text=ikasgai[row[0]]+": "+"{:.2f}".format(float(row[1])) +"%"))
+         textList.addElement(item)
+         textdoc.text.addElement(textList)
+     
+   
 
   for courselang in data.keys():
      coursetitle = H(stylename=h2style,text=coursename+"-"+courselang,outlinelevel=2)
@@ -238,6 +279,35 @@ def coursePage(coursename,data,lang):
        p.addElement(f)
        img = Image(href=href, type="simple", show="embed", actuate="onLoad")
        f.addElement(img)
+       
+     blankline = P(text="")
+     textdoc.text.addElement(blankline)    
+
+     if lang=="eu":
+         subjectsp = P(text="%70 baino gainditu gutxiago duten ikasgaiak:")
+     else:
+        subjectsp = P(text="Asignaturas con menos del %70 de aprobados:")
+     textdoc.text.addElement(subjectsp)
+     blankline = P(text="")
+     textdoc.text.addElement(blankline)
+     textList = List(stylename="L1")
+
+
+     file = path+"ehunekoak-"+period+"-"+year+"-"+coursename + courselang+".csv"
+     with open(file, 'r', encoding="UTF-8") as results:
+        reader = csv.reader(results)
+        headers = next(reader, None)  # get first row with headers
+        for row in reader:
+         if float(row[1]) < 70 and row[0]!= "All":
+            item = ListItem()
+            if lang=="eu":
+                item.addElement(P(text=row[0]+": "+"{:.2f}".format(float(row[1])) +"%"))
+            else:
+                item.addElement(P(text=ikasgai[row[0]]+": "+"{:.2f}".format(float(row[1])) +"%"))
+            textList.addElement(item)
+            textdoc.text.addElement(textList)
+            
+
      
      for group in data[courselang]:
        groupPage(group,lang)
@@ -272,17 +342,16 @@ def tutors():
 
 ikasgai=ikasgaiak()
 td = ''
-#td=tutors()  
-
+td=tutors()  
 
 #print(td["3º A"])
 
-#coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I',  '1J','1L']}, 
+#coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I', '1J', '1K','1L']}, 
                  #'2º PMAR': {'AG':['2P'],'D':['2P']},           
-                 #'2 ESO': {'AG':['2A','2B', '2C','2D'], 'D':['2H', '2I',  '2J']},
-                 #'3 ESO': {'AG':['3A','3B','3C'], 'D':['3H','3I','3J','3K']},
-                 #'4 ESO': {'AG':['4A','4B','4C','4D'], 'D':['4H', '4I', '4J','4K','4L']},
-                 #'3º PMAR': {'AG':['3D'], 'D':['3L']},
+                 #'2 ESO': {'AG':['2A','2B', '2C','2D'], 'D':['2H', '2I',  '2J','2K']},
+                 #'3 ESO': {'AG':['3A','3B','3C','3D'], 'D':['3H','3I','3J']},
+                 #'4 ESO': {'AG':['4A','4B','4C'], 'D':['4H', '4I', '4J','4K']},
+                 #'3º PMAR': {'AG':['3D'], 'D':['3D']},
                  #'1º Bach.': {'AG':['5A','5B'], 'D':[ '5H', '5I', '5J']},
                  #'2º Bach.': {'AG':['6A','6B'], 'D':['6H', '6I',  '6J']}
                  #})

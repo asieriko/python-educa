@@ -181,8 +181,9 @@ class GetEDUCAdata():
         self.params.append(['tbAlumno.dtFechaNacimiento',''])
 
     def selectdata(self,data=[]):
-        self.params.append(['btnEnviar.x','43'])
-        self.params.append(['btnEnviar.y','10'])
+        #self.params.append(['btnEnviar.x','43'])
+        #self.params.append(['btnEnviar.y','10'])
+        self.params.append(['btnEnviar','Bidali']) #Change in 2018-19 maybe for the new desing
         if "year" in data:
             self.selectyeardata()
         if "grades" in data:
@@ -197,7 +198,9 @@ class GetEDUCAdata():
         if not path:
             path = os.path.join(self.path,"educa.csv")
         r = self.s.post(self.exporturl, data=self.params)
-        if self.verbose: print(r.headers)
+        if self.verbose: 
+            print(self.params)
+            print(r.headers)
         print("Get data: ", r.status_code)
         print("Retrieveing data to file: " + path + "  ...")
         if r.status_code == 200:

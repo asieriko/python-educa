@@ -190,9 +190,9 @@ class notak:
         :param x: list with course language
         :return: D for D and AG for A or G
         """
-        if x in ['D','D-A.Elea.','D-A.Eleb.In.']:
+        if x in ['D','D-B.Elea.','D-A.Eleb.In.']:
             return 'D'
-        elif x in ['A','G','G-A.Eleb.In.','A-A.Eleb.In.','G-A.Elea.','A-A.Elea.']:
+        elif x in ['A','G','G-A.Eleb.In.','A-A.Eleb.In.','G-B.Elea.','G-A.Elea.','A-A.Elea.','A-B.Elea.']:
             return 'AG'
 
     def modeloBil(self, x):
@@ -686,6 +686,7 @@ class notak:
         levelpivot = self.df[(self.df['lang'] == lang) & (self.df['year'] == self.year) & (self.df['course'] == course)]
         levelpivot = pd.pivot_table(levelpivot, index=["abv_"+self.langg+""], values=["grade"], columns=['year', "period"], aggfunc=func)
         levelperiods = levelpivot.swaplevel(0, 2, axis=1)
+        
         levelyears = levelpivot.swaplevel(0, 1, axis=1)
         levelcurrent= levelperiods[self.periods[self.period - 1]]
         
@@ -1103,75 +1104,75 @@ class notak:
                         pt = bsg.reset_index().round(1)
                         doc.addTable(pt.values,["name_" + self.langg]+list(badsubjectsgroup.columns[1:]))
                     
-                    #TODO askabi and group data
-                    #in 1013 +/- self.td = self.getTutorsData()
-                    self.td = self.getTutorsData() #FIXME it does not work if askabi's data is not present!
-                    self.translation = {'group': {'eu': 'Taldea','es':'Grupo'},
-               'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
-               'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
-               'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
-               'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
-               'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
-               'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
-               'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumnado que promociona'},
-               'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
-               'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
-               'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
-               'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
-               'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
-               'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
-               'part': {'eu' : 'Atala', 'es': 'Apartado' },
-               'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
-               'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
-               'Konforme': {'eu': 'Ados','es':'Conforme'}}
-                    if self.td != '':
-                        table = td.Table()
-                        table.addElement(td.TableColumn(numbercolumnsrepeated=2))
-                        headers=[self.translation['part'][self.langg],'2 ' + self.translation['period'][self.langg]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
-                        tr = td.TableRow()
-                        table.addElement(tr)
-                        for val in headers:
-                            tc = td.TableCell(stylename="Table")
-                            tr.addElement(tc)
-                            p = td.P(stylename=doc.tableheaders,text=val)
-                            tc.addElement(p)
-                        import re #names in EDUCA and ASKABI are different
-                        g = re.sub(r"[ \.º]", "", group)
-                        g = re.sub(r'Bach2|Batx2', '6', g)
-                        g = re.sub(r'Bach1|Batx1', '5', g)
-                        print(g)
+                    ##TODO askabi and group data
+                    ##in 1013 +/- self.td = self.getTutorsData()
+                    #self.td = self.getTutorsData() #FIXME it does not work if askabi's data is not present!
+                    #self.translation = {'group': {'eu': 'Taldea','es':'Grupo'},
+               #'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
+               #'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
+               #'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
+               #'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
+               #'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
+               #'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
+               #'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumnado que promociona'},
+               #'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
+               #'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
+               #'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
+               #'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
+               #'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
+               #'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
+               #'part': {'eu' : 'Atala', 'es': 'Apartado' },
+               #'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
+               #'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
+               #'Konforme': {'eu': 'Ados','es':'Conforme'}}
+                    #if self.td != '':
+                        #table = td.Table()
+                        #table.addElement(td.TableColumn(numbercolumnsrepeated=2))
+                        #headers=[self.translation['part'][self.langg],'2 ' + self.translation['period'][self.langg]]#,"2. Ebaluazioa","Azken Ebaluazioa"]
+                        #tr = td.TableRow()
+                        #table.addElement(tr)
+                        #for val in headers:
+                            #tc = td.TableCell(stylename="Table")
+                            #tr.addElement(tc)
+                            #p = td.P(stylename=doc.tableheaders,text=val)
+                            #tc.addElement(p)
+                        #import re #names in EDUCA and ASKABI are different
+                        #g = re.sub(r"[ \.º]", "", group)
+                        #g = re.sub(r'Bach2|Batx2', '6', g)
+                        #g = re.sub(r'Bach1|Batx1', '5', g)
+                        #print(g)
                     
-                        f = self.td[g]
-                        for line in f:
-                            if "group" in line: #FIXME: If not all group tables contain a row with the group name (also in text header...)
-                                continue
-                            tr = td.TableRow()
-                            table.addElement(tr)
-                            for i,val in enumerate(line):
-                                if i==0:
-                                    tc = td.TableCell(stylename="Table")
-                                    tr.addElement(tc)
-                                    p = td.P(stylename=doc.tablecontents,text=self.translation[val][self.langg])
-                                elif val=="EzKonforme":
-                                    tc = td.TableCell(stylename="Table")
-                                    tr.addElement(tc)
-                                    p = td.P(stylename=doc.tablecontentscenterred,text=self.translation[val][self.langg])
-                                elif val=="Konforme":
-                                    tc = td.TableCell(stylename="Table")
-                                    tr.addElement(tc)
-                                    p = td.P(stylename=doc.tablecontentscenter,text=self.translation[val][self.langg])
-                                else:
-                                    tc = td.TableCell(stylename="Table")
-                                    tr.addElement(tc)	   
-                                    if isinstance(val, numbers.Number):
-                                        val = round(val,1)
-                                    p = td.P(stylename=doc.tablecontentscenter,text=val)#round(val,1)?
-                                tc.addElement(p)
+                        #f = self.td[g]
+                        #for line in f:
+                            #if "group" in line: #FIXME: If not all group tables contain a row with the group name (also in text header...)
+                                #continue
+                            #tr = td.TableRow()
+                            #table.addElement(tr)
+                            #for i,val in enumerate(line):
+                                #if i==0:
+                                    #tc = td.TableCell(stylename="Table")
+                                    #tr.addElement(tc)
+                                    #p = td.P(stylename=doc.tablecontents,text=self.translation[val][self.langg])
+                                #elif val=="EzKonforme":
+                                    #tc = td.TableCell(stylename="Table")
+                                    #tr.addElement(tc)
+                                    #p = td.P(stylename=doc.tablecontentscenterred,text=self.translation[val][self.langg])
+                                #elif val=="Konforme":
+                                    #tc = td.TableCell(stylename="Table")
+                                    #tr.addElement(tc)
+                                    #p = td.P(stylename=doc.tablecontentscenter,text=self.translation[val][self.langg])
+                                #else:
+                                    #tc = td.TableCell(stylename="Table")
+                                    #tr.addElement(tc)	   
+                                    #if isinstance(val, numbers.Number):
+                                        #val = round(val,1)
+                                    #p = td.P(stylename=doc.tablecontentscenter,text=val)#round(val,1)?
+                                #tc.addElement(p)
 
-                        doc.addTitle3(self.groupstats[self.langg],True)
-                        doc.textdoc.text.addElement(table)
+                        #doc.addTitle3(self.groupstats[self.langg],True)
+                        #doc.textdoc.text.addElement(table)
                     
-                    #ENDTODO
+                    ##ENDTODO
                     
                     doc.addTitle2(self.sresults[self.langg],True)
                     doc.addTitle3(self.notpas[self.langg])
@@ -1542,13 +1543,13 @@ if __name__ == "__main__":
     baliogabekokurtsoak = ucepca
     #files = ["/home/asier/Hezkuntza/SGCC-Erregistroak-15-16/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluación/1º Ev/Sabanas 2º Bach 27-11/1ev-2bach.csv"]
     #n.insertdataDB(files)
-    year = "2017-2018"
+    year = "2018-2019"
     for lang in ['eu','es']:
       n = notak(db,lang)
-      n.setWorkDir("ebaluaketa1718")
-      n.getData(year, ebaluaketak, 3, baliogabekokurtsoak)
-      n.generateFinalGrade()
-      n.generateYearsAllGoodSubjects(ebaluaketak[1])
+      n.setWorkDir("ebaluaketa1819")
+      n.getData(year, ebaluaketak, 1, baliogabekokurtsoak)
+      #n.generateFinalGrade()
+      #n.generateYearsAllGoodSubjects(ebaluaketak[1])
       #n.removepending()
       #print("course np.mean")
       #n.generateCoursePlots(np.mean)

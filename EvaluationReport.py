@@ -76,8 +76,8 @@ tablecontentscenterred.addElement(ParagraphProperties(numberlines="false", linen
 tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }))
 textdoc.styles.addElement(tablecontentscenterred)
 
-lang="eu"
-year="2017-2018"
+lang="es"
+year="2018-2019"
 #period="Azken Ebaluazioa"
 #period="3. Ebaluazioa"
 period = "Final"
@@ -145,6 +145,9 @@ def groupPage(group,lang):
     g = g.replace("º ", "")
     g = g.replace(".", "")
     g = g.replace("º", "")
+    g = g.replace("° ", "")
+    g = g.replace("°", "")
+    g = g.replace(" ", "")
     g = g.replace("Bach1", "5")
     g = g.replace("Bach2", "6")
     g = g.replace("Batx1", "5")
@@ -325,7 +328,7 @@ def tutors():
   df = pd.read_csv(path + "reportgruoupdata.csv",sep=",")
   taldeak = df.group.unique()
   zutabeak = ['id','group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
-  columns_drop = ['risk34','total','eba']
+  columns_drop = ['harreman_ik','harreman_ik_irak','KonfHar','materiala','garbitasuna','KonfGar','bizikidetza_kopur','risk34','total','eba']
   df.drop(columns_drop, axis=1, inplace=True)
   df.fillna('',inplace=True)
   tdata = {}
@@ -346,25 +349,25 @@ td=tutors()
 
 #print(td["3º A"])
 
-#coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D'], 'D':['1H', '1I', '1J', '1K','1L']}, 
+#coursegroups = OrderedDict({ '1 ESO': {'AG':['1A','1B', '1C','1D', '1F','1G'], 'D':['1H', '1I', '1J', '1K','1L']}, 
                  #'2º PMAR': {'AG':['2P'],'D':['2P']},           
-                 #'2 ESO': {'AG':['2A','2B', '2C','2D'], 'D':['2H', '2I',  '2J','2K']},
-                 #'3 ESO': {'AG':['3A','3B','3C','3D'], 'D':['3H','3I','3J']},
-                 #'4 ESO': {'AG':['4A','4B','4C'], 'D':['4H', '4I', '4J','4K']},
-                 #'3º PMAR': {'AG':['3D'], 'D':['3D']},
-                 #'1º Bach.': {'AG':['5A','5B'], 'D':[ '5H', '5I', '5J']},
+                 #'2 ESO': {'AG':['2A','2B', '2C','2D'], 'D':['2H', '2I',  '2J','2K','2L']},
+                 #'3 ESO': {'AG':['3A','3B','3C'], 'D':['3H','3I','3J','3K']},
+                 #'4 ESO': {'AG':['4A','4B','4C','4D'], 'D':['4H', '4I', '4J']},
+                 #'3º PMAR': {'AG':['3D'], 'D':['3L']},
+                 #'1º Bach.': {'AG':['5A','5B'], 'D':[ '5H', '5I']},
                  #'2º Bach.': {'AG':['6A','6B'], 'D':['6H', '6I',  '6J']}
                  #})
 
 
 
-coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E'], 'D':['1.H', '1.I',  '1.J','1.K','1.L']}, 
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E','1° F','1° G'], 'D':['1.H', '1.I',  '1.J','1.K','1.L']}, 
                  '2º PMAR': {'AG':['2º P']},           
-                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2.K']},
-                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J']},
-                 '4 ESO': {'AG':['4º A','4º B','4º C'], 'D':['4.H', '4.I',  '4.J','4.K']},
-                 '3º PMAR': {'AG':['3º D']},
-                 '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2.K', '2.L']},
+                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3 H','3 I','3 J','3 K']},
+                 '4 ESO': {'AG':['4º A','4º B','4º C','4° D'], 'D':['4 H', '4 I',  '4 J']},
+                 '3º PMAR': {'AG':['3º D','3 L']},
+                 '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I']},
                  '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
                  })
 

@@ -163,7 +163,7 @@ class Ui(QtWidgets.QMainWindow):
         ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
         dbhb=["1 ESO","2 ESO","3 ESO","4 ESO","1º Bach","1. DBH","2. DBH","3. DBH","4. DBH","3º Div.Cur.","4º Div.Cur.","4º Div. Cur.","1. Batxilergoa LOE","1. DBH LOMCE","1. Batxilergoa LOMCE","3. DBH LOMCE","3. Ikaskuntza eta Errendimendua Hobetzeko Programak","2. DBH LOMCE","4. DBH LOMCE","2. Ikaskuntza eta Errendimendua Hobetzeko Programak"]#,"2. Batxilergoa LOMCE",
         dbh12=["1. DBH LOMCE","2. DBH LOMCE"]
-        baliogabekokurtsoak = ucepca#+dbhb #+dbhb para solo 2bach
+        baliogabekokurtsoak = ucepca+dbhb #+dbhb para solo 2bach
         for lang in ['eu','es']:
             self.n = notak.notak(self.db,lang,debug=True)
             self.n.setWorkDir(eb+year)            
@@ -250,7 +250,7 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllStatsPlots()
                 
             print("generate reportgruoupdata.csv")
-            #self.n.mergegroupstatsaskabi()    
+            self.n.mergegroupstatsaskabi()     
                 
             if self.ui.allStatsStudentsEs.isChecked() and lang == 'es':
                 print("generate Stats Student")

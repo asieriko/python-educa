@@ -266,9 +266,16 @@ class database:
                 for row in reader:
                     if row[group_type] not in ["Arrunta","Ordinario"]:  #FIXME: Check if it is ordinario in spanish
                         continue
-                    cur.execute(
+                    try:
+                        cur.execute(
                         "INSERT INTO yeardata(uniquename, year, course, cgroup, lang, repeating) VALUES(?, ?, ?,?, ?, ?)",
                         (row[uniquename], row[year], row[course], row[group], row[lang], row[repeating]))
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                        print(row[uniquename], row[year], row[course], row[group], row[lang], row[repeating])
+                    except Exception as e:
+                        print("Exception in _query: %s" % e)
+                        print(row[uniquename], row[year], row[course], row[group], row[lang], row[repeating])
         con.commit()
         con.close()
     

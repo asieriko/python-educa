@@ -77,10 +77,10 @@ tablecontentscenterred.addElement(TextProperties(attributes={'fontsize':"12pt" }
 textdoc.styles.addElement(tablecontentscenterred)
 
 lang="es"
-year="2018-2019"
+year="2019-2020"
 #period="Azken Ebaluazioa"
-#period="3. Ebaluazioa"
-period = "Final"
+period="1. Ebaluazioa"
+#period = "Final"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -89,19 +89,12 @@ percent = ' - ' + period + " (" + year + ") " + "-percent-" + lang + ".png"
 
 
 translation = {'group': {'eu': 'Taldea','es':'Grupo'},
-               'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
-               'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
-               'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
-               'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
-               'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
-               'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
                'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumando que promociona'},
                'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
                'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
                'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
                'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
                'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
-               'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
                'part': {'eu' : 'Atala', 'es': 'Apartado' },
                'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
                'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
@@ -325,10 +318,10 @@ def ikasgaiak():
 
   
 def tutors():
-  df = pd.read_csv(path + "reportgruoupdata.csv",sep=",")
+  df = pd.read_csv(path + "reportgroupdata.csv",sep=",")
   taldeak = df.group.unique()
-  zutabeak = ['id','group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
-  columns_drop = ['harreman_ik','harreman_ik_irak','KonfHar','materiala','garbitasuna','KonfGar','bizikidetza_kopur','risk34','total','eba']
+  zutabeak = ['id','group','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','risk34','total','eba']
+  columns_drop = ['risk34','total','eba']
   df.drop(columns_drop, axis=1, inplace=True)
   df.fillna('',inplace=True)
   tdata = {}
@@ -361,18 +354,18 @@ td=tutors()
 
 
 
-coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E','1° F','1° G'], 'D':['1.H', '1.I',  '1.J','1.K','1.L']}, 
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E','1° F'], 'D':['1.H', '1.I',  '1.J']}, 
                  '2º PMAR': {'AG':['2º P']},           
-                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J','2.K', '2.L']},
-                 '3 ESO': {'AG':['3º A','3º B','3º C'], 'D':['3 H','3 I','3 J','3 K']},
-                 '4 ESO': {'AG':['4º A','4º B','4º C','4° D'], 'D':['4 H', '4 I',  '4 J']},
-                 '3º PMAR': {'AG':['3º D','3 L']},
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D','2º E'], 'D':['2.H', '2.I',  '2.J','2.K', '2.L']},
+                 '3 ESO': {'AG':['3º A','3º B','3º C','3º D'], 'D':['3 H','3 I','3 J','3 K']},
+                 '4 ESO': {'AG':['4º A','4º B','4º C','4° D'], 'D':['4 H', '4 I',  '4 J','4 k']},
+                 '3º PMAR': {'AG':['3º E','3 L']},
                  '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I']},
-                 '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
+                 '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I']}
                  })
 
-courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
-#courses = ['2º Bach.']
+#courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
+courses = ['2º Bach.']
 
 
 for k in courses:
@@ -392,14 +385,3 @@ for k in courses:
 
     
 textdoc.save("report-"+period+year+"-"+lang+".odt")  
-
-#coursegroups = OrderedDict({ '1. DBH LOMCE': {'AG':['1º A','1º B', '1º C','1º D'], 'D':['1.H', '1.I',  '1.J','1.L']}, 
-                 #'2. DBH LOMCE': {'AG':['2º A','2º B', '2º C','2º D'], 'D':['2.H', '2.I',  '2.J']},
-                 #'3. DBH LOMCE': {'AG':['3º A','3º B','3º C'], 'D':['3.H','3.I','3.J','3.K']},
-                 #'4. DBH LOMCE': {'AG':['4º A','4º B','4º C','4º D'], 'D':['4.H', '4.I',  '4.J','4.K','4.L']},
-                 #'3º PMAR': {'AG':['3º D'], 'D':['3.L']},
-                 #'1. Batxilergoa LOE': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I', 'Batx.1J']},
-                 #'2. Batxilergoa LOE': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I',  'Batx.2J']}
-                 #})
-
-#courses = ['1. DBH LOMCE','2. DBH LOMCE','3. DBH LOMCE','4. DBH LOMCE','1. Batxilergoa LOE','2. Batxilergoa LOE']

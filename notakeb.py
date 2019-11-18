@@ -1104,24 +1104,14 @@ class notak:
                         pt = bsg.reset_index().round(1)
                         doc.addTable(pt.values,["name_" + self.langg]+list(badsubjectsgroup.columns[1:]))
                     
-                    #TODO askabi and group data
-                    #in 1013 +/- self.td = self.getTutorsData()
-                    #self.td = ''#FIXME ASKABI NOT ANYMORE
-                    self.td = self.getTutorsData() #FIXME it does not work if askabi's data is not present! 
+                    self.td = self.getGroupData() #FIXME it does not work if askabi's data is not present! 
                     self.translation = {'group': {'eu': 'Taldea','es':'Grupo'},
-               'harreman_ik': {'eu': 'Ikasleen arteko harremanak','es':'Relaciones entre el alumnado'},
-               'harreman_ik_irak': {'eu': 'Ikasle eta irakasleen arteko harremanak','es':'Relaciones entre el alumnado y el profesorado'},
-               'KonfHar': {'eu': 'Harremanen adostasuna','es':'Conformidad relaciones'},
-               'materiala': {'eu': 'Materialaren zainketa','es':'Cuidado del material'},
-               'garbitasuna': {'eu': 'Gelaren garbitasuna','es':'Limpieza del aula'},
-               'KonfGar': {'eu': 'Gelaren adostasuna','es':'Conformidad aula'},
                'promoting': {'eu': 'Promozionatzen duten ikasleen %','es':'% de alumnado que promociona'},
                'Danger5': {'eu': '5 suspentso edo gehiago duen ikasleen %','es':'% alumnado con 5 suspensos o más'},
                'KonfProm': {'eu': 'Promozioaren adostasuna','es':'Conformidad promoción'},
                'badsubjs': {'eu': 'Gaindituen %70 baino gutxiago duten ikasgaien %','es':'% de asignaturas con menos de un 70% de aprobados'},
                'KonfIkasgai': {'eu': 'Ikasgaien gaindituen adostasuna','es':'Conformidad aprobado asignaturas'},
                'suspavg': {'eu': 'Ikasleen bataz besteko suspentso kopurua','es':'Promedio de suspensos por alumnos'},
-               'bizikidetza_kopur': {'eu': 'Erregistratutako bizikidetza arazo kopurua','es':'Número de incidencias de convivencia registradas'},
                'part': {'eu' : 'Atala', 'es': 'Apartado' },
                'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
                'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
@@ -1447,7 +1437,7 @@ class notak:
             plt.savefig(self.workdir+"/"+course + '-allgroupsprom.png')
             plt.close()
             
-    def mergegroupstatsaskabi(self,askfile=None):
+    def generateGroupStats(self):
         
         #FIXME: In the report i use promoting as percentaje, here it is as absolute.
         #Either change here calculating the percentaje or change the csv genration
@@ -1492,38 +1482,29 @@ class notak:
         gbs.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
         gbs["KonfIkasgai"] = gbs.apply (lambda row: konfikas(row),axis=1)
         
-        if askfile:
-            ad = pd.read_csv(askfile)
-        else:
-            ad = pd.read_csv(self.workdir+"/tutore.csv",encoding="ISO-8859-15")
-        columns_drop = ['urtea','data','zenbat?','giroa','analisia','koordina_zerbitzu', 'balorazioa','oso_ongi', 'hobekutza']
-        ad.drop(columns_drop, axis=1, inplace=True)
-        ad.drop('docent', axis=1, inplace=True) #FIXME: Etorkizuenean gorde beharko zen
-        ad.drop('tut_erregistroa', axis=1, inplace=True) #FIXME: Etorkizuenean gorde beharko zen
-        ad["KonfHar"] = ad.apply (lambda row: konf5(row,["harreman_ik","harreman_ik_irak"]),axis=1)
-        ad["KonfGar"] = ad.apply (lambda row: konf5(row,["garbitasuna","materiala"]),axis=1)
-        
         allg =  pd.merge(gst,gbs,right_on="group",left_on="group")
-        alld = pd.merge(allg,ad,how="left",right_on="taldea",left_on="group")
         
         
         #['harreman1', 'harreman2', 'KonfHar', 'material','garbitasun', 'KonfGar', 'Promozionatzen', 'suspasko', 'KonfProm','Suspikasgai', 'KonfIkasgai', 'Suspikasle','Bizikidetza']
-        zutabeak = ['group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
-        alld = alld.reindex(columns=zutabeak)
-        alld.sort_values('group',inplace=True)
-        alld.fillna('',inplace=True)
-        alld.to_csv(self.workdir+"/reportgroupdata.csv")
+        zutabeak = ['group','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','risk34','total','eba']
+        allg = allg.reindex(columns=zutabeak)
+        allg.sort_values('group',inplace=True)
+        allg.fillna('',inplace=True)
+        allg.to_csv(self.workdir+"/reportgroupdata.csv")
                 
-        return alld
+        return allg
     
-    def getTutorsData(self):
+    def getGroupData(self):
+        """
+        Loads reportgroupdata.csv with a summary of some groups stats.
+        """
         df = pd.read_csv(self.workdir+"/reportgroupdata.csv",sep=",")
         taldeak = df.group.unique()
-        zutabeak = ['id','group','harreman_ik','harreman_ik_irak', 'KonfHar', 'materiala','garbitasuna', 'KonfGar','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','bizikidetza_kopur','risk34','total','eba']
+        zutabeak = ['group','promoting','Danger5', 'KonfProm','badsubjs', 'KonfIkasgai', 'suspavg','risk34','total','eba']
         columns_drop = ['risk34','total','eba']
         df.drop(columns_drop, axis=1, inplace=True)
         df.fillna('',inplace=True)
-        tdata = {}
+        gdata = {}
         for t in taldeak:
             dfn = df[df.group==t]
             l=[]
@@ -1531,8 +1512,9 @@ class notak:
                 a=dfn[column].tolist()
                 a.insert(0,column)
                 l.append(a)
-            tdata[t] = l[1:]
-        return tdata
+            gdata[t] = l[1:]
+        return gdata
+    
     
 if __name__ == "__main__":
     #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"

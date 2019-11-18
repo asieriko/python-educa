@@ -1,4 +1,4 @@
-import requests, os
+import requests, os, json
 from bs4 import BeautifulSoup
 
 class GetEDUCAdata():
@@ -11,10 +11,13 @@ class GetEDUCAdata():
         self.username = username
         self.password = password
         self.loginurl = "https://educages.navarra.es/acceso/login?service=https%3A%2F%2Feducages.navarra.es%2FEduca%2Fcontrol%2FptrLogin"
+        self.profileurl = "https://educages.navarra.es/Educa/api/usuario/cambiarPerfil"
         self.coursesurl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDFCargaAjax"
         self.exporturl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDF"
+        self.horariosurl = "https://educages.navarra.es/Educa/control/trGNRExportacion"
+        self.horariosurl1 = "https://educages.navarra.es/Educa/control/trGNRExportacion?txAction=conGHPHorarios&txNombre=Horarios"
         self.logouturl = "https://educages.navarra.es/Educa/public/Logout"
-        self.path = os.path.dirname(os.path.realpath(__file__))
+        self.path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data")
         self.s = requests.Session()
         self.body = {}
         self.lang = "eu"
@@ -70,7 +73,14 @@ class GetEDUCAdata():
             print(self.body)
             print(self.s.headers)
         print("Login", r.status_code)
-        
+        payload = '103' #103 gestor - 101 profesor
+        headers = {'content-type': 'application/json','Sec-Fetch-Site': 'same-origin','Sec-Fetch-Mode': 'cors'}
+        r = self.s.post(self.profileurl,data=json.dumps(payload), headers=headers)
+        if self.verbose: 
+            print(self.body)
+            print(self.s.headers)
+        print("Profile Change", r.status_code)
+
     def logout(self):
         logoutPage = self.s.get(self.loginurl)
         if self.verbose: 
@@ -145,14 +155,16 @@ class GetEDUCAdata():
         for param in data:
             self.params.append(["'"+param+"'",''])
     
-    def selectgradedata(self): #Only grades
+    def selectgradedata(self,groupings=False): #Only grades
         self.params.append(['tbMatricula.txCursoEscolar',''])
         self.params.append(['tbAlumno.txUsuarioUnico',''])
         self.params.append(['tbMatricula.txNombreCurso',''])
+        if groupings:
+            self.params.append(['tbMatricula.txNombreGrupo',''])
         self.params.append(['tbCalificacionesDF.nombreAsignatura',''])
         self.params.append(['tbCalificacionesDF.cursoAsignatura',''])
         self.params.append(['tbCalificacionesDF.evaluacion',''])
-        self.params.append(['tbCalificacionesDF.calificacionNumericaOrd',''])
+        self.params.append(['tbCalificacionesDF.calificacionNumericaOrd',''])        
 
     def selectyeardata(self):
         self.params.append(['tbMatricula.txCursoEscolar',''])
@@ -179,6 +191,41 @@ class GetEDUCAdata():
         self.params.append(['tbAlumno.cSexo',''])
         self.params.append(['tbAlumno.txNacionalidad',''])
         self.params.append(['tbAlumno.dtFechaNacimiento',''])
+        
+        
+    def selecttimetabledata(self):    
+        """
+        <INPUT name="iIdSede" id="iIdSede" type="Hidden" value="1254"></INPUT>
+
+        <INPUT name="iIdCursoEscolar" id="iIdCursoEscolar" type="Hidden" value="131"></INPUT>
+
+        <INPUT name="idPRSPuesto" id="idPRSPuesto" type="Hidden" value="237949"></INPUT>
+        """
+        self.params.append(['txAction','conGHPHorarios'])
+        self.params.append(['bFechaExportacion','F'])
+        self.params.append(['bCursoEscolar','F'])
+        self.params.append(['tbHorario.txSede',''])
+        self.params.append(['tbHorario.txNombrePuesto',''])
+        self.params.append(['tbHorario.txNombreProfesor',''])
+        self.params.append(['tbHorario.dtFechaInicio',''])
+        self.params.append(['tbHorario.dtFechaFin',''])
+        self.params.append(['tbHorario.txParrilla',''])
+        self.params.append(['tbHorario.iIdDiaSemana',''])
+        self.params.append(['tbHorario.iHora',''])
+        self.params.append(['tbHorario.txCuentaPNTEApps',''])
+        self.params.append(['tbHorario.txNombreUsuarioUnico',''])
+        self.params.append(['tbClases.txGrupoAlumno',''])
+        self.params.append(['tbClases.txNombreAula',''])
+        self.params.append(['tbClases.txNombreCurso',''])
+        self.params.append(['tbClases.txNombreAsigCorto',''])
+        self.params.append(['tbClases.txNombreAsig',''])
+        self.params.append(['hdParams',''])
+        self.params.append(['hdNombre','Horarios'])
+        self.params.append(['iIdSede','1254'])
+        self.params.append(['iIdCursoEscolar','131'])
+        self.params.append(['idPRSPuesto','237949'])
+        self.params.append(['rbIdiomaConsulta',self.lang])
+        self.params.append(['btnEnviar','Enviar'])
 
     def selectdata(self,data=[]):
         #self.params.append(['btnEnviar.x','43'])
@@ -188,16 +235,18 @@ class GetEDUCAdata():
             self.selectyeardata()
         if "grades" in data:
             self.selectgradedata()
+        if "gradesgroups" in data:
+            self.selectgradedata(groupings=True)
         if "end" in data:
             self.selectenddata()
         if "personal" in data:
             self.selectpersonaldata()    
         
 
-    def getdata(self,path=None):
+    def getdata(self,url,path=None):#def getdata(self,params,sesion?,path=None):
         if not path:
             path = os.path.join(self.path,"educa.csv")
-        r = self.s.post(self.exporturl, data=self.params)
+        r = self.s.post(url, data=self.params)
         if self.verbose: 
             print(self.params)
             print(r.headers)
@@ -208,7 +257,7 @@ class GetEDUCAdata():
                 for chunk in r.iter_content():
                     f.write(chunk)
                     
-    def getallcurrentgrades(self):
+    def getallcurrentgrades(self,groupings=False):
         self.login()
         years = self.getyears()
         courses = self.getcourses(years[-1]) #At the end of the course, EDUCA has also next course data so current becomenes next...
@@ -216,8 +265,13 @@ class GetEDUCAdata():
         subjects = self.getsubjects()
         self.selectsubjects(subjects)
         self.getpossibledata()
-        self.selectdata(["grades"])
-        self.getdata(os.path.join(self.path,"grades"+str(years[-1][0])+".csv"))
+        if groupings:
+            self.selectdata(["gradesgroups"])
+            rfile = os.path.join(self.path,"gradesgroups"+str(years[-1][0])+".csv")
+        else:
+            self.selectdata(["grades"])
+            rfile = os.path.join(self.path,"grades"+str(years[-1][0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
 
     def getallyeargrades(self,year):
@@ -232,7 +286,8 @@ class GetEDUCAdata():
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["grades"])
-        self.getdata(os.path.join(self.path,"grades"+str(year[0])+".csv"))
+        rfile = os.path.join(self.path,"grades"+str(year[0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
 
         
@@ -248,7 +303,8 @@ class GetEDUCAdata():
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["personal","year"])
-        self.getdata(os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv"))
+        rfile = os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
 
 
@@ -266,7 +322,8 @@ class GetEDUCAdata():
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["personal","year"])
-        self.getdata(os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv"))
+        rfile = os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
 
     def getnames4gradedata(self,year=None):
@@ -283,7 +340,8 @@ class GetEDUCAdata():
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["personal","grades"])
-        self.getdata(os.path.join(self.path,"/names-year"+str(years[-1][0])+".csv"))
+        rfile = os.path.join(self.path,"names-year"+str(years[-1][0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
 
     def getnamesgroupgradedata(self,group,year=None):
@@ -298,9 +356,17 @@ class GetEDUCAdata():
         self.selectsubjects(subjects)
         self.getpossibledata()
         self.selectdata(["personal","grades"])
-        self.getdata(os.path.join(self.path,"names-year-"+str(group)+"-"+str(years[-1][0])+".csv"))
+        rfile = os.path.join(self.path,"names-year-"+str(group)+"-"+str(years[-1][0])+".csv")
+        self.getdata(self.exporturl,rfile)
         self.logout()
     
+
+    def gettimetabledata(self):
+        self.login()
+        self.selecttimetabledata()
+        rfile = os.path.join(self.path,"timetable.csv") #include year
+        self.getdata(self.horariosurl,rfile)
+        self.logout()
     
     def getalldata(self,data,syear=None):
         self.login()
@@ -316,7 +382,8 @@ class GetEDUCAdata():
             self.selectsubjects(subjects)
             self.getpossibledata()
             self.selectdata([data])
-            self.getdata(os.path.join(self.path,data+str(year[0])+".csv"))
+            rfile = os.path.join(self.path,data+str(year[0])+".csv")
+            self.getdata(self.exporturl,rfile)
         self.logout()
         
         
@@ -331,7 +398,9 @@ if __name__ == "__main__":
     #ged.getalldata("personal","2016-2017")
     #print(ged.params)
     #ged.resetparams()
-    ged.getalldata("end","2016-2017")
+    #ged.getalldata("end","2016-2017")
+    ged.gettimetabledata()
+    #ged.getallcurrentgrades(groupings=True)
     #print(ged.params)
     #ged.resetparams()
     #ged.getalldata("grades")

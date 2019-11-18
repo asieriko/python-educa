@@ -3,6 +3,7 @@ import os
 from PyQt5 import uic, QtWidgets, QtCore, QtGui
 
 import numpy as np
+import pandas as pd #for missingGradesPerTeacher
 import notakeb as notak
 import database as db
 import getEducaData as ged
@@ -45,7 +46,7 @@ class Ui(QtWidgets.QMainWindow):
         self.outcsv = ""
         self.show()
         self.n = ''
-        self.path = os.path.dirname(os.path.realpath(__file__))
+        self.path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data")
 
     @QtCore.pyqtSlot()
     def selectdb(self):
@@ -69,7 +70,10 @@ class Ui(QtWidgets.QMainWindow):
             try:
                 getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
                 getdata.getallcurrentgrades()
+                getdata.getallcurrentgrades(groupings=True)
+                getdata.gettimetabledata()
                 self.data.delete_last_years_grades(year)
+                #move all downloaded data to  data/ and make a parameter in get...
                 self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
             except:
                 print("An error ocurred")
@@ -153,6 +157,43 @@ class Ui(QtWidgets.QMainWindow):
             self.ui.deptarmentPlotsEu.setCheckState(QtCore.Qt.Unchecked)
             self.ui.primarySchoolsPlotsEu.setCheckState(QtCore.Qt.Unchecked)
 
+    
+    def missingGradesPerTeacher(self,period,year,lang):
+        timetable = os.path.join(self.path,"timetable.csv") #include year?
+        grades = os.path.join(self.path,"gradesgroups"+year+".csv")
+        import time
+        timestr = time.strftime("%Y_%m_%d-%H_%M_%S")
+        output = os.path.join(self.path,"jarrigabe_"+timestr+".csv")
+        
+        self.subject1= {'eu':'Irakasgaiaren Izena','es':'Nombre Asignatura'}
+        self.group = {'eu':'Taldea','es':'Grupo'}
+        self.subject2= {'eu':'Irakasgaia','es':'Asignatura'}
+        self.teacher = {'eu':'Irakaslea','es':'Profesor'}
+        self.grade = {'eu':'Zenbakizko nota ohikoa','es':'Nota numérica Ordinaria'}
+        
+        dfh = pd.read_csv(timetable,delimiter=";",encoding="ISO-8859-1")
+        dfh.drop_duplicates(subset=[self.teacher[lang] ,self.subject2[lang],self.group[lang]],inplace=True)
+        dfg = pd.read_csv(grades,delimiter=";",encoding="ISO-8859-1")
+        period = "1. Ebaluazioa"
+        dfg = dfg[dfg.Ebaluaketa==period]
+        #falta da aktibo ez dauden irakasleak filtratzea
+        dft = dfg.merge(dfh,left_on=[self.subject1[lang],self.group[lang]],right_on=[self.subject2[lang],self.group[lang]])
+
+        def total(x):
+            return int(len(x))
+
+
+        def missing(x):
+            print(x.isna().sum())
+            return int(x.isna().sum())
+
+
+        table = pd.pivot_table(dft,values=self.grade[lang],index=[self.teacher[lang],self.group[lang],self.subject2[lang]],aggfunc={total,missing})    
+        table = table.astype({"total":int,"missing":int})
+        table ['Ehunekoa'] = (table ['missing'] / table ['total']) *100
+        table.to_csv(output,float_format='%.2f',decimal=',')
+    
+    
     @QtCore.pyqtSlot()
     def run(self):
         eb = self.ui.periodCB.currentText()
@@ -163,7 +204,8 @@ class Ui(QtWidgets.QMainWindow):
         ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
         dbhb=["1 ESO","2 ESO","3 ESO","4 ESO","1º Bach","1. DBH","2. DBH","3. DBH","4. DBH","3º Div.Cur.","4º Div.Cur.","4º Div. Cur.","1. Batxilergoa LOE","1. DBH LOMCE","1. Batxilergoa LOMCE","3. DBH LOMCE","3. Ikaskuntza eta Errendimendua Hobetzeko Programak","2. DBH LOMCE","4. DBH LOMCE","2. Ikaskuntza eta Errendimendua Hobetzeko Programak"]#,"2. Batxilergoa LOMCE",
         dbh12=["1. DBH LOMCE","2. DBH LOMCE"]
-        baliogabekokurtsoak = ucepca+dbhb #+dbhb para solo 2bach
+        baliogabekokurtsoak = ucepca#+dbhb #+dbhb para solo 2bach
+        self.missingGradesPerTeacher(eb,year,"eu")
         for lang in ['eu','es']:
             self.n = notak.notak(self.db,lang,debug=True)
             self.n.setWorkDir(eb+year)            
@@ -250,7 +292,7 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllStatsPlots()
                 
             print("generate reportgruoupdata.csv")
-            self.n.mergegroupstatsaskabi()     
+            self.n.generateGroupStats()
                 
             if self.ui.allStatsStudentsEs.isChecked() and lang == 'es':
                 print("generate Stats Student")
@@ -271,8 +313,8 @@ class Ui(QtWidgets.QMainWindow):
                 print("Primary School plots")
                 self.n.generatePrymarySchoolPlots(np.mean)
     
-        print("Mix askabi and EDUCA for the report")
-        self.n.mergegroupstatsaskabi()    
+        #print("Mix askabi and EDUCA for the report")
+        #self.n.generateGroupStats()    
         print("End of generation")
     
 if __name__ == '__main__':

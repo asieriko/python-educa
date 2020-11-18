@@ -15,23 +15,30 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_3">
+    <item row="3" column="0">
+     <widget class="QPushButton" name="runB">
+      <property name="text">
+       <string>Run</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0">
      <widget class="QGroupBox" name="groupBox_2">
       <property name="title">
        <string>Data</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_13">
-         <property name="text">
-          <string>File:</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="1">
         <widget class="QLineEdit" name="dffileLE">
          <property name="echoMode">
           <enum>QLineEdit::Normal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_13">
+         <property name="text">
+          <string>File:</string>
          </property>
         </widget>
        </item>
@@ -49,15 +56,15 @@
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="yearCB"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_15">
+       <item row="3" column="1">
+        <widget class="QPushButton" name="updateDataB">
          <property name="text">
-          <string>Period:</string>
+          <string>Update Data</string>
          </property>
         </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="yearCB"/>
        </item>
        <item row="2" column="1">
         <widget class="QComboBox" name="periodCB">
@@ -93,25 +100,26 @@
          </item>
         </widget>
        </item>
-       <item row="3" column="1">
-        <widget class="QPushButton" name="updateDataB">
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_15">
          <property name="text">
-          <string>Update Data</string>
+          <string>Period:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QCheckBox" name="cbSheet">
+         <property name="text">
+          <string>Get Group Sheet</string>
          </property>
         </widget>
        </item>
        <item row="3" column="3">
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+        <widget class="QCheckBox" name="cbMissingTeachers">
+         <property name="text">
+          <string>Generate Missing Teachers Grades</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
+        </widget>
        </item>
        <item row="1" column="3">
         <widget class="QPushButton" name="newYearCB">
@@ -123,286 +131,338 @@
       </layout>
      </widget>
     </item>
-    <item row="1" column="0">
+    <item row="2" column="0">
      <widget class="QGroupBox" name="groupBox">
+      <property name="font">
+       <font>
+        <weight>50</weight>
+        <bold>false</bold>
+       </font>
+      </property>
       <property name="title">
-       <string>Plots</string>
+       <string>Courses</string>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="1" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Course Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="2">
-        <widget class="QCheckBox" name="courseStatsPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="2">
-        <widget class="QCheckBox" name="passPercentEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QCheckBox" name="bilingualCoursePlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1">
-        <widget class="QCheckBox" name="allStatsPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QCheckBox" name="allGroupStatsPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="2">
-        <widget class="QCheckBox" name="deptarmentPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="label_9">
-         <property name="text">
-          <string>All Stats Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QCheckBox" name="coursePlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Pass Percent</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="1">
-        <widget class="QCheckBox" name="promCoursePlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QCheckBox" name="passPercentEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="1">
-        <widget class="QCheckBox" name="deptarmentPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QCheckBox" name="allGroupPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="1">
-        <widget class="QCheckBox" name="primarySchoolsPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QCheckBox" name="groupStatsPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2">
-        <widget class="QCheckBox" name="allGroupPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Group Stats Plots</string>
-         </property>
-        </widget>
-       </item>
        <item row="6" column="2">
-        <widget class="QCheckBox" name="promCoursePlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="0">
-        <widget class="QLabel" name="label_12">
-         <property name="text">
-          <string>Primary School Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="2">
-        <widget class="QCheckBox" name="primarySchoolsPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="2">
-        <widget class="QCheckBox" name="allGroupStatsPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="2">
-        <widget class="QCheckBox" name="bilingualCoursePlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="1">
-        <widget class="QCheckBox" name="allStatsStudentsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
         <widget class="QCheckBox" name="groupStatsPlotsEu">
          <property name="text">
           <string>Euskara</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="0">
-        <widget class="QLabel" name="label_11">
+       <item row="3" column="1">
+        <widget class="QCheckBox" name="cbEs">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
-          <string>Department Plots</string>
+          <string>All Castellano</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
-        <widget class="QCheckBox" name="courseStatsPlotsEs">
-         <property name="text">
-          <string>Castellano</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>Bilingual Course Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="2">
-        <widget class="QCheckBox" name="allStatsPlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_5">
-         <property name="text">
-          <string>All Group Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
+       <item row="10" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
           <string>Promotion Course Plots</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="2">
-        <widget class="QCheckBox" name="coursePlotsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>All Group Stats Plots</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="2">
-        <widget class="QCheckBox" name="allStatsStudentsEu">
-         <property name="text">
-          <string>Euskara</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="0">
-        <widget class="QLabel" name="label_10">
-         <property name="text">
-          <string>All Stats Students</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="label_8">
          <property name="text">
           <string>Course Stats Plots</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1">
-        <widget class="QCheckBox" name="cbEs">
+       <item row="11" column="0">
+        <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>All Castellano</string>
+          <string>Bilingual Course Plots</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="2">
+       <item row="4" column="2">
+        <widget class="QCheckBox" name="coursePlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>All Group Stats Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>All Group Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="1">
+        <widget class="QCheckBox" name="deptarmentPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="2">
+        <widget class="QCheckBox" name="primarySchoolsPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLabel" name="label_16">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Plots</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="2">
+        <widget class="QCheckBox" name="deptarmentPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
         <widget class="QCheckBox" name="cbEu">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
           <string>All Euskera</string>
          </property>
         </widget>
        </item>
+       <item row="10" column="1">
+        <widget class="QCheckBox" name="promCoursePlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Course Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="0">
+        <widget class="QLabel" name="label_9">
+         <property name="text">
+          <string>All Stats Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QCheckBox" name="coursePlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QCheckBox" name="passPercentEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="1">
+        <widget class="QCheckBox" name="allStatsPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="2">
+        <widget class="QCheckBox" name="allGroupStatsPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="2">
+        <widget class="QCheckBox" name="courseStatsPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Department Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QCheckBox" name="bilingualCoursePlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="2">
+        <widget class="QCheckBox" name="allStatsPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="2">
+        <widget class="QCheckBox" name="allStatsStudentsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="2">
+        <widget class="QCheckBox" name="passPercentEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>All Stats Students</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0">
+        <widget class="QLabel" name="label_12">
+         <property name="text">
+          <string>Primary School Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QCheckBox" name="groupStatsPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="2">
+        <widget class="QCheckBox" name="promCoursePlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QCheckBox" name="allGroupStatsPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Pass Percent</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="2">
+        <widget class="QCheckBox" name="allGroupPlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <widget class="QCheckBox" name="courseStatsPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="1">
+        <widget class="QCheckBox" name="allStatsStudentsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Group Stats Plots</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QCheckBox" name="allGroupPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="2">
+        <widget class="QCheckBox" name="bilingualCoursePlotsEu">
+         <property name="text">
+          <string>Euskara</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="1">
+        <widget class="QCheckBox" name="primarySchoolsPlotsEs">
+         <property name="text">
+          <string>Castellano</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QRadioButton" name="CbAllCourses">
+         <property name="text">
+          <string>All Courses</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QRadioButton" name="CbDBH1Batx">
+         <property name="text">
+          <string>DBH/ESO-1 Batx/Bach</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QRadioButton" name="CbBatx2">
+         <property name="text">
+          <string>2 Batx/Bach</string>
+         </property>
+        </widget>
+       </item>
       </layout>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="runB">
-      <property name="text">
-       <string>Run</string>
-      </property>
      </widget>
     </item>
    </layout>

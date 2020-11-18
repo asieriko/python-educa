@@ -79,8 +79,8 @@ textdoc.styles.addElement(tablecontentscenterred)
 lang="es"
 year="2019-2020"
 #period="Azken Ebaluazioa"
-period="1. Ebaluazioa"
-#period = "Final"
+#period="2. Ebaluazioa"
+period = "Final"
 path = "/home/asier/Hezkuntza/python-hezkuntza/python-educa/"+period+year+"/"
 pie = "-" + period + "-" + lang + ".png"
 mean = ' - ' + period + " (" + year + ") " + "-mean-" + lang + ".png"
@@ -98,7 +98,9 @@ translation = {'group': {'eu': 'Taldea','es':'Grupo'},
                'part': {'eu' : 'Atala', 'es': 'Apartado' },
                'period': {'eu': 'Ebaluazioa','es':'Evaluación'},
                'EzKonforme': {'eu': 'Ez Ados','es':'No Conforme'},
-               'Konforme': {'eu': 'Ados','es':'Conforme'}}
+               'Konforme': {'eu': 'Ados','es':'Conforme'},
+               'Bil':{'eu':'Atal Elebiduna','es':'Sección Bilingüe'},
+               'Plur':{'eu':'Bigarren Hezkuntza Eleanitza','es':'Secundaria Plurilingüe'}}
 
 #pl = PageLayout(name="pagelayout")
 #textdoc.automaticstyles.addElement(pl)
@@ -306,7 +308,24 @@ def coursePage(coursename,data,lang):
 
      
      for group in data[courselang]:
-       groupPage(group,lang)
+        if group in ["Bil","Plur"]:
+            #1 ESO-AG-AGBil - 2. Ebaluazioa (2019-2020) -percent-es
+            g = coursename + "-" + courselang + "-"+courselang+group
+            grouptitle = H(stylename=h3style,text=translation[group][lang],outlinelevel=3)
+            textdoc.text.addElement(grouptitle)
+            blankline = P(text="")
+            textdoc.text.addElement(blankline)
+            for diagramtype in [mean,percent]:#,name2]:
+                p = P()
+                textdoc.text.addElement(p)
+                img_path = path + g + diagramtype
+                href = textdoc.addPicture(img_path)
+                f = Frame(name=group+diagramtype, anchortype="paragraph", width="17cm", height="7.5cm", zindex="0")
+                p.addElement(f)
+                img = Image(href=href, type="simple", show="embed", actuate="onLoad")
+                f.addElement(img)
+        else:
+            groupPage(group,lang)
 
 def ikasgaiak():
     ikasgai = {}
@@ -354,18 +373,18 @@ td=tutors()
 
 
 
-coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E','1° F'], 'D':['1.H', '1.I',  '1.J']}, 
-                 '2º PMAR': {'AG':['2º P']},           
-                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D','2º E'], 'D':['2.H', '2.I',  '2.J','2.K', '2.L']},
-                 '3 ESO': {'AG':['3º A','3º B','3º C','3º D'], 'D':['3 H','3 I','3 J','3 K']},
-                 '4 ESO': {'AG':['4º A','4º B','4º C','4° D'], 'D':['4 H', '4 I',  '4 J','4 k']},
+coursegroups = OrderedDict({ '1 ESO': {'AG':['1º A','1º B', '1º C','1º D','1º E','1º F','Bil','Plur'], 'D':['1.H', '1.I',  '1.J','Plur']}, 
+                 '2º PMAR': {'AG':['2º P'],'D':['2º P']},           
+                 '2 ESO': {'AG':['2º A','2º B', '2º C','2º D','2º E','Bil','Plur'], 'D':['2.H', '2.I',  '2.J','2.K','Plur']},
+                 '3 ESO': {'AG':['3º A','3º B','3º C','3º D','Bil','Plur'], 'D':['3 H','3 I','3 J','3 K']},
+                 '4 ESO': {'AG':['4º A','4º B','4º C','4º D','Bil'], 'D':['4 H', '4 I', '4 J','4 K']},
                  '3º PMAR': {'AG':['3º E','3 L']},
                  '1º Bach.': {'AG':['Bach.1A','Bach.1B'], 'D':[ 'Batx.1H', 'Batx.1I']},
                  '2º Bach.': {'AG':['Bach.2A','Bach.2B'], 'D':['Batx.2H', 'Batx.2I']}
                  })
 
-#courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
-courses = ['2º Bach.']
+courses = ['1 ESO','2 ESO','2º PMAR','3 ESO','3º PMAR','4 ESO','1º Bach.','2º Bach.']
+#courses = ['2º Bach.']
 
 
 for k in courses:
@@ -384,4 +403,4 @@ for k in courses:
      f.addElement(img)
 
     
-textdoc.save("report-"+period+year+"-"+lang+".odt")  
+textdoc.save(period+year+"/report-"+period+year+"-"+lang+".odt")  

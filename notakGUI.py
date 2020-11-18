@@ -58,6 +58,8 @@ class Ui(QtWidgets.QMainWindow):
             self.data = db.database(self.db)
             self.years = self.data.get_years()
             self.ui.yearCB.addItems(sorted(self.years,reverse=True))
+            self.workDir = os.path.dirname(fileName)
+            print(self.workDir)
         #dialog for seleccting db
 
     @QtCore.pyqtSlot()
@@ -70,8 +72,19 @@ class Ui(QtWidgets.QMainWindow):
             try:
                 getdata = ged.GetEDUCAdata(user,passwd,verbose=False)
                 getdata.getallcurrentgrades()
-                getdata.getallcurrentgrades(groupings=True)
-                getdata.gettimetabledata()
+                if self.cbMissingTeachers.isChecked() == True:
+                    print("GetallCurrent and now with groupings")
+                    getdata.getallcurrentgrades(groupings=True)
+                    print("timetable")
+                    getdata.gettimetabledata()
+                    eb = self.ui.periodCB.currentText()
+                    print("missing")
+                    self.missingGradesPerTeacher(eb,year,"eu")
+                if self.cbSheet.isChecked() == True:
+                    print("Get Sheet")
+                    eb = self.ui.periodCB.currentText()
+                    getdata.getsabana(eb)
+                getdata.logout()
                 self.data.delete_last_years_grades(year)
                 #move all downloaded data to  data/ and make a parameter in get...
                 self.data.insert_grades([os.path.join(self.path,"grades"+year+".csv")])
@@ -98,6 +111,8 @@ class Ui(QtWidgets.QMainWindow):
                 print("An error ocurred")
                 QtWidgets.QMessageBox.warning(self, 'An error ocurred', "An error ocurred while trying to get new year's data, make sure that login data is correct", QtWidgets.QMessageBox.Ok)
         self.ui.yearCB.addItem(year) #Fixme: Insert in order
+    
+  
     
     @QtCore.pyqtSlot()
     def enableEs(self):
@@ -159,6 +174,7 @@ class Ui(QtWidgets.QMainWindow):
 
     
     def missingGradesPerTeacher(self,period,year,lang):
+        print("Generating missingGradesPerTeacher")
         timetable = os.path.join(self.path,"timetable.csv") #include year?
         grades = os.path.join(self.path,"gradesgroups"+year+".csv")
         import time
@@ -174,7 +190,6 @@ class Ui(QtWidgets.QMainWindow):
         dfh = pd.read_csv(timetable,delimiter=";",encoding="ISO-8859-1")
         dfh.drop_duplicates(subset=[self.teacher[lang] ,self.subject2[lang],self.group[lang]],inplace=True)
         dfg = pd.read_csv(grades,delimiter=";",encoding="ISO-8859-1")
-        period = "1. Ebaluazioa"
         dfg = dfg[dfg.Ebaluaketa==period]
         #falta da aktibo ez dauden irakasleak filtratzea
         dft = dfg.merge(dfh,left_on=[self.subject1[lang],self.group[lang]],right_on=[self.subject2[lang],self.group[lang]])
@@ -201,19 +216,31 @@ class Ui(QtWidgets.QMainWindow):
         year = self.ui.yearCB.currentText()
         ebaluaketak = [self.ui.periodCB.itemText(i) for i in range(self.ui.periodCB.count())]
         print(ebaluaketak,year,eb,ebn)
-        ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE"]
+        ucepca=["4. C.E.U.","3. C.E.U","2. C.E.U.","1. Oinarrizko Hezkuntza (C.E.U.)","Programa de Currículo Adaptado","PCA","Programa de Currículo Adaptado LOMCE","1-E.B.O.2 Aula Alternativa","2-E.B.O.2 Aula Alternativa"]
         dbhb=["1 ESO","2 ESO","3 ESO","4 ESO","1º Bach","1. DBH","2. DBH","3. DBH","4. DBH","3º Div.Cur.","4º Div.Cur.","4º Div. Cur.","1. Batxilergoa LOE","1. DBH LOMCE","1. Batxilergoa LOMCE","3. DBH LOMCE","3. Ikaskuntza eta Errendimendua Hobetzeko Programak","2. DBH LOMCE","4. DBH LOMCE","2. Ikaskuntza eta Errendimendua Hobetzeko Programak"]#,"2. Batxilergoa LOMCE",
         dbh12=["1. DBH LOMCE","2. DBH LOMCE"]
-        baliogabekokurtsoak = ucepca#+dbhb #+dbhb para solo 2bach
-        self.missingGradesPerTeacher(eb,year,"eu")
+        Batx2 = ["2. Batxilergoa LOE","2. Batxilergoa LOMCE"]
+        if self.ui.CbDBH1Batx.isChecked():
+            baliogabekokurtsoak = ucepca+Batx2
+        elif self.ui.CbBatx2.isChecked():
+            baliogabekokurtsoak = ucepca+dbhb #+dbhb para solo 2bach
+        else:
+            baliogabekokurtsoak = ucepca
+        print(baliogabekokurtsoak)
         for lang in ['eu','es']:
-            self.n = notak.notak(self.db,lang,debug=True)
+            self.n = notak.notak(self.db,lang,debug=False)
             self.n.setWorkDir(eb+year)            
             self.n.getData(year, ebaluaketak, ebn+1, baliogabekokurtsoak)
             if eb == 'Final':
                 self.n.generateFinalGrade()
             
             mailak = self.n.df[self.n.df.year == year].course.unique()
+            self.n.promcourseplots(ebaluaketak[ebn]) #Needed for groupstats.csv
+            taldeak = self.n.df[self.n.df.year == year].cgroup.unique() #Needed for badsubjects.csv
+            for t in taldeak:
+                self.n.generatePassPercent(ebaluaketak[ebn],year,t)
+            
+            
             print("Course Pass Percentes")
             for m in mailak:
                 self.n.generateCoursePassPercent(ebaluaketak[ebn],self.n.year,m)
@@ -244,7 +271,7 @@ class Ui(QtWidgets.QMainWindow):
             if self.ui.allGroupStatsPlotsEu.isChecked() and lang == 'eu':
                 print("All group stats plots")
                 self.n.generateAllGroupStatsPlots()
-            if self.ui.passPercentEs.isChecked() and lang == 'es':
+            if self.ui.passPercentEs.isChecked() and lang == 'es': #Required before to generate pass percents
                 taldeak = self.n.df[self.n.df.year == year].cgroup.unique()
                 print("Group pass percent")
                 for t in taldeak:
@@ -264,7 +291,7 @@ class Ui(QtWidgets.QMainWindow):
                 self.n.generateAllGroupPlots(np.mean)
                 print("All group plots n.percent")
                 self.n.generateAllGroupPlots(self.n.percent)
-            if self.ui.promCoursePlotsEs.isChecked() and lang == 'es':
+            if self.ui.promCoursePlotsEs.isChecked() and lang == 'es': #Needed befor to gnerate grouptstats.csv
                 print("course prom plots")
                 self.n.promcourseplots(ebaluaketak[ebn])
             if self.ui.promCoursePlotsEu.isChecked() and lang == 'eu':

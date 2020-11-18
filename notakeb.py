@@ -16,7 +16,7 @@ import textdoc as td
 rcParams.update({'figure.autolayout': True}) #TODO it makes small plots with very big labels, I've to figure how to change subject names with abreviations
 # in each? plt.gca().tight_layout()
 
-
+#FIXME: self.df.course vs self.df.coursename - the first is subject course and the second actuall course
 class notak:
 
 
@@ -274,11 +274,18 @@ class notak:
         pt = pd.pivot_table(self.df[(self.df.cgroup == group) & (self.df.year == self.year) & (
         self.df.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                           aggfunc=self.lowerThan).fillna('')
+        course = self.df[(self.df.cgroup == group) & (self.df.year == self.year)].course.unique()[0]
+        
+                
         if self.debug:
            print("Get data for group: " + group)
            print(pt)
         missed = self.notPassedStats(pt.grade)
-        p,prom,risk,danger, left,legendhist = self.generatePiedata(missed)
+        if course == "2º Bach.": #FIXME: Course hardcoded
+            p, prom, riesgo, peligro, left, legendhist = self.generatePiedata(missed,bach2=True)
+        else:
+            p, prom, riesgo, peligro, left, legendhist = self.generatePiedata(missed)
+            
         studentnumber = sum(p)
         p = [value*100/studentnumber for value in p]
         failsnumber = sum([i*f for i,f in enumerate(prom)])+sum([i*f for i,f in enumerate(risk)])+sum([i*f for i,f in enumerate(danger)])
@@ -424,7 +431,8 @@ class notak:
             for billang in ['AGBil','AGPlur','DPlur']:
                 dfcourses = self.df[(self.df.bil==billang)&(self.df.year==self.year)][["course","lang"]].drop_duplicates()
                 for lang in list(dfcourses.lang.unique())+[None]:  # [df.lang.unique(),None]:
-                    print(lang)
+                    if self.debug:
+                        print("generateCourseBilPlots: ",lang)
                     if lang:
                         dflang = self.df[self.df['lang'] == lang]
                     else:
@@ -601,7 +609,8 @@ class notak:
                 continue
             doc = td.textdoc()
             doc.addImageHeaderFooter(self.header,self.footer)
-            print(dept)
+            if self.debug:
+                print("generateDeptPlots:",dept)
             dept = str(dept)
             doc.addTitle("Departamento: " + dept)
             doc.addParagraph("Este documento contiene un resumen de las calificaciones del departamento.")
@@ -775,7 +784,7 @@ class notak:
             #print(group)
             self.generateGroupStatsPlots(group)
             
-    def generatePiedata(self,missed):
+    def generatePiedata(self,missed,bach2=False):
         '''
         :param missed: a list with the number of students for each number of not passed subjectcs
         :return p: a list with 3 values, number of students with <=2 not passed subjects, number of students with 3-4 not passed subjects, number of students with >=4 not passed subjects
@@ -786,17 +795,29 @@ class notak:
         :return legendhist: a list with the number of not passed subjects as legend for the diagram bar
         '''
         mmissed = np.max([int(k) for k in missed.keys()])
+        if self.debug:
+            print("mmised",missed)
+            print("mmissed",mmissed)
         if mmissed < 5: mmissed = 5
-        prom=list([missed[0],missed[1],missed[2]])
-        for k in range(3,mmissed+1):
+        prom = []
+        risk = []
+        promnumber = 3
+        risknumber = 5
+        if bach2: 
+            promnumber = 1
+        for k in range(0,promnumber):
+            prom.append(missed[k])
+            risk.append(0)
+        for k in range(promnumber,mmissed+1):
             prom.append(0)
-        risk = [0,0,0,missed[3],missed[4]]
-        for k in range(5,mmissed+1):
+        for k in range(promnumber,risknumber):
+            risk.append(missed[k])
+        for k in range(risknumber,mmissed+1):
             risk.append(0)
         danger=list()
-        for k in range(5):
+        for k in range(risknumber):
             danger.append(0)
-        for k in range(5,mmissed+1):
+        for k in range(risknumber,mmissed+1):
             danger.append(missed[k])
         value = 0.5
         left = []
@@ -807,9 +828,9 @@ class notak:
         t = 0
         for i in missed.keys():
             t += i*missed[i] #nº total de suspensos
-            if i < 3: p[0] += missed[i]
-            if i in [3,4]: p[1] += missed[i]
-            if i > 4: p[2] += missed[i]
+            if i < promnumber: p[0] += missed[i]
+            if i in list(range(promnumber,risknumber)): p[1] += missed[i]
+            if i >= risknumber: p[2] += missed[i]
         legendhist =  [str(i) for i in range(0,mmissed+1)]
         return p, prom, risk, danger, left, legendhist
 
@@ -847,7 +868,8 @@ class notak:
                 dflang.period == self.periods[self.period - 1])], index=["uniquename"], values=["grade"],
                                   aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
-                print(course,lang,missed)
+                if self.debug:
+                    print(course,lang,missed)
                 self.generatePiePlot(missed,course+"-"+lang)
                 #FIXME:Test and delete
                 #title = self.studpasstitle[self.langg]
@@ -885,7 +907,8 @@ class notak:
                 dflang = self.df[self.df['lang'] == lang]
             else:
                 dflang = self.df
-            print(dflang[dflang.year == self.year].course.unique())
+            if self.debug:
+                print(dflang[dflang.year == self.year].course.unique())
             for course in dflang[dflang.year == self.year].course.unique(): #FIXME: Using course it generates a nan course, but with coursename there are problems with and without lomce...
                 if type(course)!=type('a'):
                     print("Break:",course, " - lang:", lang)
@@ -906,7 +929,10 @@ class notak:
                             continue
                         pt = pd.pivot_table(dflang[(dflang.course == course) & (dflang.year == y) & (dflang.period == p)], index=["uniquename"], values=["grade"], aggfunc=self.lowerThan).fillna('')
                         missed = self.notPassedStats(pt.grade)
-                        _,prom,riesgo,peligro, _,_= self.generatePiedata(missed)
+                        if course == "2º Bach.":#FIXME: course hardcoded
+                            _,prom,riesgo,peligro, _,_= self.generatePiedata(missed,bach2=True)
+                        else:
+                            _,prom,riesgo,peligro, _,_= self.generatePiedata(missed)
                         t = (sum(prom)+sum(riesgo)+sum(peligro))/100
                         dict1 = {}
                         dict1.update({'year':y,'period':p,'0-2': sum(prom)/t,'3-4': sum(riesgo)/t,'+5':sum(peligro)/t}) 
@@ -966,11 +992,12 @@ class notak:
                 bad = passpercent[passpercent.positivepercentage<percentaje]
                 perbad = len(bad)*100/len(passpercent)
                 if self.debug:
+                    print("generateCoursePassPercent")
                     print(str(course))#period," of ",year," Course")
                     print("Subject with less than %" + str(percentaje) + " ap: %","{0:.2f}".format(perbad))
                     pd.options.display.float_format = '{:,.2f}%'.format
                     print(bad)
-                print(course,";",perbad)
+                    print(course,";",perbad)
                 fname = self.workdir+"/coursebadsubjs" + str(lang) + ".csv"
                 if not os.path.isfile(fname):
                     with open(fname, 'w') as csvfile:
@@ -1000,12 +1027,13 @@ class notak:
         bad = passpercent[passpercent.positivepercentage<percentaje]
         perbad = len(bad)*100/len(passpercent)
         if self.debug:
+           print("generatePassPercent")
            print(str(group))#period," of ",year," Course")
            print("Subject with less than %" + str(percentaje) + " ap: %","{0:.2f}".format(perbad))
            pd.options.display.float_format = '{:,.2f}%'.format
            print(bad)
-        #print("Group;" + str(group) +";"+ str(percentaje) + " ap: %;",str(100-perbad))
-        print(group,";",perbad)
+           #print("Group;" + str(group) +";"+ str(percentaje) + " ap: %;",str(100-perbad))
+           print(group,";",perbad)
         fname = self.workdir+"/groupbadsubjs.csv"
         if not os.path.isfile(fname):
             with open(fname, 'w') as csvfile:
@@ -1127,6 +1155,7 @@ class notak:
                             tr.addElement(tc)
                             p = td.P(stylename=doc.tableheaders,text=val)
                             tc.addElement(p)
+                        #FIXME: Don't Rename groups
                         import re #names in EDUCA and ASKABI are different
                         g = re.sub(r"[ \.º°]", "", group)
                         g = re.sub(r'Bach2|Batx2', '6', g)
@@ -1290,9 +1319,11 @@ class notak:
         groupgrades.reset_index(level=0, inplace=True)
         subjectsgrouppt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["name_" + self.langg],values=["grade"],margins=True,aggfunc=self.percent).fillna('')#this one could return percentajes of all subjects, not only bad ones!
         badsubjectsgroup = subjectsgrouppt[subjectsgrouppt.grade<70] #FIXME: 70 hardcoded
-        badsubjectsgroup.unstack()
-        badsubjectsgroup.reset_index(level=0,inplace=True)
-        badsubjectsgroup.columns=["name_" + self.langg,"%"]
+        #FIXME: Fails if ther are no subjects with less than the percentaje ...
+        if not badsubjectsgroup.empty:
+            badsubjectsgroup.unstack()
+            badsubjectsgroup.reset_index(level=0,inplace=True)
+            badsubjectsgroup.columns=["name_" + self.langg,"%"]
         studentsnotpasses = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == self.periods[self.period-1])  & (self.df.cgroup == group)],index=["uniquename"],values=["grade"],aggfunc=[self.lowerThan,np.mean]).fillna('')
         studentsnotpasses.unstack()
         studentsnotpasses.reset_index(level=0,inplace=True)
@@ -1343,7 +1374,8 @@ class notak:
         self.createDir(self.workdir + group)
         fname = group + "/" + self.year + "-" + self.periods[self.period-1] + "-" + student + ".png" #to use self.workdir + group + "/" + we need to create group dir first self.createDir(self.workdir + group)
         plt.clf()
-        studentgroupgrades.plot(kind="bar",x=studentgroupgrades["name_" + self.langg])
+        studentgroupgrades = studentgroupgrades.set_index("name_" + self.langg)
+        studentgroupgrades.plot(kind="bar")#,x=list(studentgroupgrades["name_" + self.langg]))
         plt.ylim(0, 10)
         plt.axhline(5)
         plt.savefig(self.workdir + fname, format="png")
@@ -1390,15 +1422,16 @@ class notak:
         1A   1B   1C
         '''
         l=("0","1-2","3-4",">=5")                    
-        courses = self.df[self.df.year == self.year].course.unique()#FIXME excludedCourses?
+        courses = self.df[self.df.year == self.year].coursename.unique()#FIXME excludedCourses?
         with open(self.workdir+"/groupstats.csv", 'w') as csvfile:
                     fieldnames = ['group', 'total',"promoting","risk34","Danger5","notpassedtot","suspavg"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
         for course in courses:
-            groups = self.df[(self.df.year == self.year) & (self.df.course == course)].cgroup.unique()
+            groups = self.df[(self.df.year == self.year) & (self.df.coursename == course)].cgroup.unique()
             groupsd={}
             groupsc=[] #FIXME: Change group name to adapt to askabi's naming
+            #FIXME: Don't Rename groups
             for group in groups:
                 group1 = group.replace(". ", "")
                 group1 = group1.replace("º ", "")
@@ -1411,7 +1444,10 @@ class notak:
             for group in groupsc:
                 pt = pd.pivot_table(self.df[(self.df.year == self.year) & (self.df.period == period) & (self.df.cgroup == groupsd[group])], index=["uniquename"], values=["grade"], aggfunc=self.lowerThan).fillna('')
                 missed = self.notPassedStats(pt.grade)
-                p, prom, riesgo, peligro, left, legendhist = self.generatePiedata(missed)
+                if course == "2º Bach.": #FIXME: Course hardcoded
+                    p, prom, riesgo, peligro, left, legendhist = self.generatePiedata(missed,bach2=True)
+                else:
+                    p, prom, riesgo, peligro, left, legendhist = self.generatePiedata(missed)
                 a=prom[0],sum(prom[1:]),sum(riesgo),sum(peligro)#prom has only 3 values 0 susp, 1susp and 2 susp, others are 0
                 t=sum(a)
                 a = [x *100/ t for x in a]
@@ -1419,7 +1455,8 @@ class notak:
                 notpassed = 0
                 for key, value in missed.items():
                     notpassed += key*value
-                print(group,";",t,";",p[0],";",p[2],";",notpassed,";",notpassed/t)
+                if self.debug:
+                    print(group,";",t,";",p[0],";",p[2],";",notpassed,";",notpassed/t)
                 with open(self.workdir+"/groupstats.csv", 'a') as csvfile:
                     fieldnames = ['group', 'total',"promoting","risk34","Danger5","notpassedtot","suspavg"]
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -1471,6 +1508,7 @@ class notak:
             return float(row[col])*100/int(row['total'])
         
         gst = pd.read_csv(self.workdir+"/groupstats.csv")
+        #FIXME: Don't Rename groups
         gst.replace({'\.{1}': '','º':'',' ':'','°':''}, regex=True,inplace=True) #names in EDUCA and ASKABI are different
         gst.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
         gst["Danger5"] = gst.apply (lambda row: topercent(row,'Danger5'),axis=1)
@@ -1478,6 +1516,7 @@ class notak:
         gst["KonfProm"] = gst.apply (lambda row: konfprom(row),axis=1)
         
         gbs = pd.read_csv(self.workdir+"/groupbadsubjs.csv")
+        #FIXME: Don't Rename groups
         gbs.replace({'\.{1}': '','º':'',' ':'','°':''}, regex=True,inplace=True)
         gbs.replace({'Bach2': '6','Batx2':'6','Bach1': '5','Batx1':'5'}, regex=True,inplace=True)
         gbs["KonfIkasgai"] = gbs.apply (lambda row: konfikas(row),axis=1)
@@ -1515,6 +1554,7 @@ class notak:
             gdata[t] = l[1:]
         return gdata
     
+
     
 if __name__ == "__main__":
     #db = "/home/asier/Hezkuntza/SGCC/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluacion/Python-educa/mendillorri.db"
@@ -1527,7 +1567,7 @@ if __name__ == "__main__":
     baliogabekokurtsoak = ucepca
     #files = ["/home/asier/Hezkuntza/SGCC-Erregistroak-15-16/PR02 Gestion del proceso ensenanza-aprendizaje (imparticion de cursos)/PR0204 Evaluación/1º Ev/Sabanas 2º Bach 27-11/1ev-2bach.csv"]
     #n.insertdataDB(files)
-    year = "2018-2019"
+    year = "2019-2020"
     for lang in ['eu','es']:
       n = notak(db,lang)
       n.setWorkDir("ebaluaketa1819")

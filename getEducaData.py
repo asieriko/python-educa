@@ -1,5 +1,29 @@
 import requests, os, json
+import datetime
 from bs4 import BeautifulSoup
+
+'''
+Obentern horarios
+POST    https://educages.navarra.es/Educa/control/trGNRExportacion
+txAction=conGHPHorarios&bFechaExportacion=F&bCursoEscolar=F&tbClases.txNombreCursoCorto=&tbClases.txNombreCurso=&tbClases.txNombreAsigCorto=&tbClases.txNombreAsig=&hdParams=&hdNombre=Horarios&iIdSede=1254&iIdCursoEscolar=132&idPRSPuesto=259911&rbIdiomaConsulta=eu&btnEnviar=Bidali
+
+txAction	"conGHPHorarios"
+bFechaExportacion	"F"
+bCursoEscolar	"F"
+tbClases.txNombreCursoCorto	""
+tbClases.txNombreCurso	""
+tbClases.txNombreAsigCorto	""
+tbClases.txNombreAsig	""
+hdParams	""
+hdNombre	"Horarios"
+iIdSede	"1254"
+iIdCursoEscolar	"132"
+idPRSPuesto	"259911"
+rbIdiomaConsulta	"eu"
+btnEnviar	"Bidali"
+
+'''
+
 
 class GetEDUCAdata():
     
@@ -10,12 +34,15 @@ class GetEDUCAdata():
     def __init__(self, username="", password="", verbose=True):
         self.username = username
         self.password = password
-        self.loginurl = "https://educages.navarra.es/acceso/login?service=https%3A%2F%2Feducages.navarra.es%2FEduca%2Fcontrol%2FptrLogin"
+        self.loginurl = "https://educages.navarra.es/Educa/control/ptrLogin" #Cambio a nuevo EDUCA "https://educages.navarra.es/acceso/login?service=https%3A%2F%2Feducages.navarra.es%2FEduca%2Fcontrol%2FptrLogin"
         self.profileurl = "https://educages.navarra.es/Educa/api/usuario/cambiarPerfil"
         self.coursesurl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDFCargaAjax"
         self.exporturl = "https://educages.navarra.es/Educa/control/trEVLExportacionCalificacionesDF"
         self.horariosurl = "https://educages.navarra.es/Educa/control/trGNRExportacion"
         self.horariosurl1 = "https://educages.navarra.es/Educa/control/trGNRExportacion?txAction=conGHPHorarios&txNombre=Horarios"
+        self.guardiasurl = "https://educages.navarra.es/Educa/api/guardiasSustituciones/datosListadoGuardias?fechaInicio={}&fechaFin={}"
+        self.sabanaurl = "https://educages.navarra.es/Educa/control/trEVLSabana?ViewType=XML"
+        self.taldeakurl = "https://educages.navarra.es/Educa/control/trSelectionGrupoSede?bUsaSelectorCursoEscolar=T&txAction=trGHPHorarioGrupo?ViewType=XMLxsiOutputType=2"
         self.logouturl = "https://educages.navarra.es/Educa/public/Logout"
         self.path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data")
         self.s = requests.Session()
@@ -25,6 +52,7 @@ class GetEDUCAdata():
         self.verbose = verbose
         self.params = [['rbIdiomaConsulta',self.lang]]
         p = [['rbIdiomaConsulta',self.lang]]
+        self.login()
         #self.params.append(['cbCursoEscolar',year[1]])
 
     def setusername(self, username):
@@ -63,12 +91,14 @@ class GetEDUCAdata():
             print("Login in...")
         loginPage = self.s.get(self.loginurl)
         soup = BeautifulSoup(loginPage.text)
-        hiddenInputs = soup.findAll(name = 'input', type = 'hidden')
-        for hidden in hiddenInputs:
-            name = hidden['name']
-            value = hidden['value']
-            self.body[name] = value
-        r = self.s.post(self.loginurl, data = self.body)
+        #hiddenInputs = soup.findAll(name = 'input', type = 'hidden') #Cambio a nuevo EDUCA 
+        #for hidden in hiddenInputs: #Cambio a nuevo EDUCA 
+        #    name = hidden['name'] #Cambio a nuevo EDUCA 
+        #    value = hidden['value'] #Cambio a nuevo EDUCA 
+        #    self.body[name] = value #Cambio a nuevo EDUCA 
+        form = soup.findAll(id='kc-form-login') #Cambio a nuevo EDUCA - nueva variable
+        self.loginURL = form[0]['action'] #Cambio a nuevo EDUCA  - nueva variable
+        r = self.s.post(self.loginURL, data = self.body) #Cambio a nuevo EDUCA  antes r = self.s.post(self.loginurl, data = self.body)
         if self.verbose: 
             print(self.body)
             print(self.s.headers)
@@ -157,7 +187,8 @@ class GetEDUCAdata():
     
     def selectgradedata(self,groupings=False): #Only grades
         self.params.append(['tbMatricula.txCursoEscolar',''])
-        self.params.append(['tbAlumno.txUsuarioUnico',''])
+        #no in new EDUCA self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca','']) #replaces uxuariounico in new educa
         self.params.append(['tbMatricula.txNombreCurso',''])
         if groupings:
             self.params.append(['tbMatricula.txNombreGrupo',''])
@@ -174,19 +205,21 @@ class GetEDUCAdata():
         self.params.append(['tbMatricula.txNombreCurso',''])
         self.params.append(['tbMatricula.txModLing',''])
         self.params.append(['tbAlumno.txNombreCompleto',''])
-        self.params.append(['tbAlumno.txUsuarioUnico',''])
+        #no in new EDUCA self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca','']) #replaces uxuariounico in new educa
         self.params.append(['tbMatricula.bRepite',''])
 
     def selectenddata(self):
         self.params.append(['tbMatricula.txCursoEscolar',''])
-        self.params.append(['tbAlumno.txUsuarioUnico',''])
+        #no in new EDUCA self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca','']) #replaces uxuariounico in new educa
         self.params.append(['tbDatosFinales.decTitulo',''])
         self.params.append(['tbDatosFinales.decPromocion',''])
         self.params.append(['tbMatricula.bEstado','']) #FIXME: Baja edo ez
         
     def selectpersonaldata(self):    
-        self.params.append(['tbAlumno.txUsuarioUnico',''])
-        self.params.append(['tbAlumno.txUsuarioEduca',''])
+        #no in new EDUCA self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca','']) #replaces uxuariounico in new educa
         self.params.append(['tbAlumno.txNombreCompleto',''])
         self.params.append(['tbAlumno.cSexo',''])
         self.params.append(['tbAlumno.txNacionalidad',''])
@@ -213,7 +246,8 @@ class GetEDUCAdata():
         self.params.append(['tbHorario.iIdDiaSemana',''])
         self.params.append(['tbHorario.iHora',''])
         self.params.append(['tbHorario.txCuentaPNTEApps',''])
-        self.params.append(['tbHorario.txNombreUsuarioUnico',''])
+        #no in new EDUCA self.params.append(['tbAlumno.txUsuarioUnico',''])
+        self.params.append(['tbAlumno.txUsuarioEduca','']) #replaces uxuariounico in new educa
         self.params.append(['tbClases.txGrupoAlumno',''])
         self.params.append(['tbClases.txNombreAula',''])
         self.params.append(['tbClases.txNombreCurso',''])
@@ -222,8 +256,8 @@ class GetEDUCAdata():
         self.params.append(['hdParams',''])
         self.params.append(['hdNombre','Horarios'])
         self.params.append(['iIdSede','1254'])
-        self.params.append(['iIdCursoEscolar','131'])
-        self.params.append(['idPRSPuesto','237949'])
+        self.params.append(['iIdCursoEscolar','132'])#FIXME: hardcoded
+        self.params.append(['idPRSPuesto','237949'])#FIXME: hardcoded
         self.params.append(['rbIdiomaConsulta',self.lang])
         self.params.append(['btnEnviar','Enviar'])
 
@@ -258,9 +292,10 @@ class GetEDUCAdata():
                     f.write(chunk)
                     
     def getallcurrentgrades(self,groupings=False):
-        self.login()
+        # self.login()
         years = self.getyears()
-        courses = self.getcourses(years[-1]) #At the end of the course, EDUCA has also next course data so current becomenes next...
+        courses = self.getcourses(years[-1]) #For most of the year
+        #courses = self.getcourses(years[-2]) #At the end of the course, EDUCA has also next course data so current becomenes next...
         self.selectcourses(courses)
         subjects = self.getsubjects()
         self.selectsubjects(subjects)
@@ -272,10 +307,10 @@ class GetEDUCAdata():
             self.selectdata(["grades"])
             rfile = os.path.join(self.path,"grades"+str(years[-1][0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
 
     def getallyeargrades(self,year):
-        self.login()
+        # self.login()
         years = self.getyears()
         for yearlist in years:
             if yearlist[0] == year:
@@ -288,11 +323,11 @@ class GetEDUCAdata():
         self.selectdata(["grades"])
         rfile = os.path.join(self.path,"grades"+str(year[0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
 
         
     def getnamesyeardata(self,year=None):
-        self.login()
+        # self.login()
         if not year:
             years = self.getyears()
         else:
@@ -305,11 +340,11 @@ class GetEDUCAdata():
         self.selectdata(["personal","year"])
         rfile = os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
 
 
     def getnamesyeardata2(self,year=None):
-        self.login()
+        # self.login()
         years = self.getyears()
         if year:
             for y in years:
@@ -324,15 +359,22 @@ class GetEDUCAdata():
         self.selectdata(["personal","year"])
         rfile = os.path.join(self.path,"names-year-"+str(years[-1][0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
 
     def getnames4gradedata(self,year=None):
-        self.login()
+        # self.login()
         if not year:
             years = self.getyears()
         else:
             years = [year]  #FIXME: look at getallyeargrades
-        courses = [["4A","85481"],["4B","85482"],["4C","85483"],["4D","85484"],["4H","85485"],["4I","85476"],["4J","85477"],["4K","85478"],["4L","85479"]] #4ht in 16-17
+        courses = [["4º A","122391","es"],
+            ["4º B","122392","es"],
+            ["4º C","122393","es"],
+            ["4º D","122394","es"],
+            ["4 H","122395","eu"],
+            ["4 I","122396","eu"],
+            ["4 J","122397","eu"],
+            ["4 K","122398","eu"]]
         for course in courses:
             self.params.append(['lbGrupos',course[1]])
         self.params.append(['cbCursoEscolar',years[-1][1]])
@@ -342,10 +384,10 @@ class GetEDUCAdata():
         self.selectdata(["personal","grades"])
         rfile = os.path.join(self.path,"names-year"+str(years[-1][0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
 
     def getnamesgroupgradedata(self,group,year=None):
-        self.login()
+        # self.login()
         if not year:
             years = self.getyears()
         else:
@@ -358,18 +400,64 @@ class GetEDUCAdata():
         self.selectdata(["personal","grades"])
         rfile = os.path.join(self.path,"names-year-"+str(group)+"-"+str(years[-1][0])+".csv")
         self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
     
 
     def gettimetabledata(self):
-        self.login()
+        # self.login()
         self.selecttimetabledata()
         rfile = os.path.join(self.path,"timetable.csv") #include year
         self.getdata(self.horariosurl,rfile)
-        self.logout()
+        # self.logout()
+    
+    
+    def getsabana(self,eb): #FIXME: Too hardcoded...
+        periods = {"1. Ebaluazioa":"1","2. Ebaluazioa":"2","3. Ebaluazioa":"3","Azken Ebaluazioa":"4","Ohiz kanpoko Ebaluazioa":"5"}
+        #"Ev inicial":"13" en la web
+        taldeakHTML = self.s.get(self.taldeakurl)  #<- Current year only
+        soup = BeautifulSoup(taldeakHTML.text)
+        taldeak = self.options(soup,"cbGruposOrdinarios")
+        groups = []
+        for taldea in taldeak[1:]: #First element is the placeholder - Talde guztiak -
+            if taldea[0] in ["PCA"]:
+                continue
+            elif taldea[0] in ["GELA ALTERNATIBOA","UCE"]:
+                groups.append([taldea[1],taldea[0],"es"])
+            elif taldea[0][-1] >= "H":
+                groups.append([taldea[1],taldea[0],"eu"])
+            else:
+                groups.append([taldea[1],taldea[0],"es"])
+        for group in groups:
+            grupo = group[0]
+            ev = periods[eb]
+            name = group[1]
+            lang = group[2]
+            params = []
+            params.append(['txRedirectLink','trEVLSabanaSelection?txxAction=trEVLSabana?ViewType=XML'])
+            params.append(['ViewType','XML'])
+            params.append(['txAction','trEVLSabana?ViewType=XML'])
+            params.append(['cbGrupoAlumnos',grupo])
+            params.append(['cbEvaluacionOrden',ev])
+            params.append(['ckRecuperacion','on'])
+            params.append(['ckEstadistica','on'])
+            #params.append(['ckEvaluacionesAnteriores','on'])
+            #params.append(['ckAsignaturasPendientes','on'])
+            params.append(['txIdioma',lang])
+            params.append(['btnEnviar','Enviar'])
+            r = self.s.get(self.sabanaurl,data=params)
+            print("Get sabana: ", r.status_code)
+            if lang == "eu":
+                path = os.path.join(self.path,name+"_Maindirea.pdf")
+            else:
+                path = os.path.join(self.path,name+"_Sábana.pdf")
+            print("Retrieveing sabana to file: " + path + "  ...")
+            if r.status_code == 200:
+                with open(path, 'wb') as f:
+                    for chunk in r.iter_content():
+                        f.write(chunk)
     
     def getalldata(self,data,syear=None):
-        self.login()
+        # self.login()
         years = self.getyears()
         if syear:
             for y in years:
@@ -384,14 +472,45 @@ class GetEDUCAdata():
             self.selectdata([data])
             rfile = os.path.join(self.path,data+str(year[0])+".csv")
             self.getdata(self.exporturl,rfile)
-        self.logout()
+        # self.logout()
         
+    def getguards(self,date=None):
+        # self.login()
+        if date==None:
+            date = datetime.datetime.now()
+            date = date.strftime('%d/%m/%Y')
+        r = self.s.get(self.guardiasurl.format(date,date))
+        print(r.url)
+        jsonresponse = json.loads(r.text)
+        #print(j)
+        guardias = jsonresponse["data"]["listadoInicial"]
+        cantidad = len(guardias)
+        todas = [[""] * 5 for i in range(cantidad)]
+        for i in range(cantidad):
+            if guardias[i]["estado"] in ["Anulada"]:
+                continue
+            print(guardias[i]["sesion"],end="-")
+            print(guardias[i]["horaInicio"],end="-")
+            print(guardias[i]["profesor"],end="-")
+            print(guardias[i]["profesorSustituto"],end="-")
+            grupos = "-".join([g["value"] for g in guardias[i]["grupos"]])
+            asignaturas = "-".join([asig for asig in guardias[i]["asignaturas"]])
+            aulas = "-".join([aula for aula in guardias[i]["aulas"]])
+            print(guardias[i]["grupos"][0]["value"],grupos,end="-")
+            print(guardias[i]["asignaturas"][0],end="-")
+            print(guardias[i]["aulas"][0])
+            todas[i] = [guardias[i]["sesion"],guardias[i]["horaInicio"],guardias[i]["profesor"],guardias[i]["profesorSustituto"],grupos,asignaturas,aulas]
+            #{'idGSGuardia': 6191, 'idGSGuardiaEstado': 4, 'estado': 'Asignada', 'fecha': '18/12/2019', 'horaInicio': '13:35', 'horaFin': '14:30', 'sesion': 7, 'profesor': 'Asier Urio Larrea', 'puesto': 'TK_01', 'profesorSustituto': 'Irantzu Fernández Sáinz-de Murieta', 'idPFRProfesor': 79056, 'grupos': [{'id': 122395, 'value': '4 H'}], 'asignaturas': ['Tecnología ES4'], 'aulas': ['1_0C4'], 'idGSContabilidadGuardia': 0}
+        
+        # self.logout()
+        return todas
         
 if __name__ == "__main__":
     import getpass
     user = input("username: ")
     passwd = getpass.getpass()
     ged = GetEDUCAdata(user,passwd,verbose=False)
+    t = ged.getguards()
     #ged.getnames4gradedata()
     #ged.getallcurrentgrades()
     ged.setfile("/home/asier/Hezkuntza/python-hezkuntza/python-educa/data")
@@ -399,7 +518,7 @@ if __name__ == "__main__":
     #print(ged.params)
     #ged.resetparams()
     #ged.getalldata("end","2016-2017")
-    ged.gettimetabledata()
+    #ged.gettimetabledata()
     #ged.getallcurrentgrades(groupings=True)
     #print(ged.params)
     #ged.resetparams()

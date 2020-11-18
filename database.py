@@ -20,12 +20,12 @@ class database:
         self.subjectsavg = defaultdict(defaultdict)
         #importing student data
         self.csv_educa = {'eu':'Usuario EDUCA','es':'Usuario EDUCA'}
-        self.csv_uniquename = {'eu':'Erabiltzaile izen bakarra','es':'Nombre de usuario único'}  # FIXME es names
+        #Desaparece en en nuevo EDUCA y se sustituye por el del PNTE que pasa a ser usuario eDUCAself.csv_uniquename = {'eu':'Erabiltzaile izen bakarra','es':'Nombre de usuario único'}  # FIXME es names
         self.csv_fullname = {'eu':'Izen Osoa','es':'Nombre Completo'}
         self.csv_birthday = {'eu':'Jaioteguna','es':'FechaNacimiento'}
-        self.csv_nationality = {'eu':'Nazionalitatea','es':'Nacionalidad'}
+        self.csv_nationality = {'eu': 'Nazionalitatea','es':'Nacionalidad'}
         self.csv_gender = {'eu':'Sexua','es':'Sexo'} #FIXME: Sexo??
-        self.csv_primaryschool = {'eu':'','es':'Centro de procedencia'}#FIXME: eu centro
+        self.csv_primaryschool = {'eu':'Jatorrizko ikastetxea','es':'Centro de procedencia'}#FIXME: eu centro
         #Still not using them:
         self.csv_birthplace_es = {'eu':'Jaioterria (ES)','es':'Localidad Nacimiento (ES)'}
         self.csv_birthplace_eu = {'eu':'Jaioterria (EU)','es':'Localidad Nacimiento (EU)'}
@@ -224,8 +224,9 @@ class database:
             with open(file, 'r', encoding="ISO-8859-1") as results: #changed encondig from utf-8
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
-                educa = self.get_csv_header_index(headers,self.csv_educa)
+                #uniquename = self.get_csv_header_index(headers,self.csv_uniquename) cambia en nuevo educa
+                #educa = self.get_csv_header_index(headers,self.csv_educa) cambia en nuevo educa
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 fullname = self.get_csv_header_index(headers,self.csv_fullname)
                 birthday = self.get_csv_header_index(headers,self.csv_birthday)
                 gender = self.get_csv_header_index(headers,self.csv_gender)
@@ -233,8 +234,8 @@ class database:
                 print(fullname)
                 for row in reader:
                     cur.execute(
-                        "INSERT OR IGNORE INTO names(uniquename, educa, fullname, birthday, gender, nationality) VALUES(?, ?, ?, ?, ?, ?)",
-                        (row[uniquename], row[educa], row[fullname],row[birthday], row[gender], row[nationality]))
+                        "INSERT OR IGNORE INTO names(uniquename, fullname, birthday, gender, nationality) VALUES(?, ?, ?, ?, ?)",
+                        (row[uniquename],  row[fullname],row[birthday], row[gender], row[nationality])) #quito educa
         con.commit()
         con.close()
 
@@ -255,7 +256,7 @@ class database:
             with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 year = self.get_csv_header_index(headers,self.csv_year)
                 course = self.get_csv_header_index(headers,self.csv_course)
                 group = self.get_csv_header_index(headers,self.csv_ref_group)
@@ -296,7 +297,7 @@ class database:
             with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 year = self.get_csv_header_index(headers,self.csv_year)
                 degree = self.get_csv_header_index(headers,self.csv_degree_decision)
                 promo = self.get_csv_header_index(headers,self.csv_promoting_decicision)
@@ -330,7 +331,7 @@ class database:
             with open(file, 'r', encoding="UTF-8") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 primaryschool = self.get_csv_header_index(headers,self.csv_primaryschool)
                 for row in reader:
                     cur.execute(
@@ -358,7 +359,7 @@ class database:
             with open(file, 'r', encoding="ISO-8859-1") as results:
                 reader = csv.reader(results, delimiter=";")
                 headers = next(reader, None)  # get first row with headers
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 year = self.get_csv_header_index(headers,self.csv_year)
                 promoting = self.get_csv_header_index(headers,self.csv_promoting)
                 for row in reader:
@@ -437,7 +438,7 @@ class database:
                 headers = next(reader, None)  # get first row with headers
                 print(headers)
                 year = self.get_csv_header_index(headers,self.csv_year)
-                uniquename = self.get_csv_header_index(headers,self.csv_uniquename)
+                uniquename = self.get_csv_header_index(headers,self.csv_educa)
                 subject = self.get_csv_header_index(headers,self.csv_subject_name)
                 course = self.get_csv_header_index(headers,self.csv_subject_course)
                 period = self.get_csv_header_index(headers,self.csv_period)
